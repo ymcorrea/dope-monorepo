@@ -4,7 +4,7 @@
   "author": "Tarrence van As",
   "license": "GPL-3.0-or-later",
   "version": "1.0.0",
-  "description": "Split your lootbags in their individual pieces",
+  "description": "Constracts for DOPE, HUSTLERS, GEAR, etc",
   "files": [
     "*.sol",
     "dist/**/*"
