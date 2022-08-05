@@ -31,3 +31,6 @@
 [submodule "packages/contracts/airdrops/lib/solmate"]
 	path = packages/contracts/airdrops/lib/solmate
 	url = https://github.com/transmissions11/solmate
+[submodule "packages/contracts/streetcred/lib/forge-optimism"]
+	path = packages/contracts/streetcred/lib/forge-optimism
+	url = https://github.com/tarrencev/forge-optimism
