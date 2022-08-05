@@ -22,3 +22,15 @@
 [submodule "packages/contracts/streetcred/lib/openzeppelin-contracts"]
 	path = packages/contracts/streetcred/lib/openzeppelin-contracts
 	url = https://github.com/OpenZeppelin/openzeppelin-contracts
+[submodule "packages/contracts/airdrops/lib/ds-test"]
+	path = packages/contracts/airdrops/lib/ds-test
+	url = https://github.com/dapphub/ds-test
+[submodule "packages/contracts/airdrops/lib/forge-std"]
+	path = packages/contracts/airdrops/lib/forge-std
+	url = https://github.com/brockelmore/forge-std
+[submodule "packages/contracts/airdrops/lib/openzeppelin-contracts"]
+	path = packages/contracts/airdrops/lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts
+[submodule "packages/contracts/airdrops/lib/solmate"]
+	path = packages/contracts/airdrops/lib/solmate
+	url = https://github.com/transmissions11/solmate
