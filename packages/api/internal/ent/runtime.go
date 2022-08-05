@@ -42,6 +42,10 @@ func init() {
 	dopeDescOpened := dopeFields[2].Descriptor()
 	// dope.DefaultOpened holds the default value on creation for the opened field.
 	dope.DefaultOpened = dopeDescOpened.Default.(bool)
+	// dopeDescSalePrice is the schema descriptor for salePrice field.
+	dopeDescSalePrice := dopeFields[5].Descriptor()
+	// dope.DefaultSalePrice holds the default value on creation for the salePrice field.
+	dope.DefaultSalePrice = dopeDescSalePrice.Default.(float64)
 	eventFields := schema.Event{}.Fields()
 	_ = eventFields
 	// eventDescCreatedAt is the schema descriptor for created_at field.

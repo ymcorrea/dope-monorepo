@@ -451,8 +451,6 @@ input DopeWhereInput {
   salepriceGTE: Float
   salepriceLT: Float
   salepriceLTE: Float
-  salepriceIsNil: Boolean
-  salepriceNotNil: Boolean
   
   """order field predicates"""
   order: Int

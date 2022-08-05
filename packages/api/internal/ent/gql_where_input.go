@@ -644,16 +644,14 @@ type DopeWhereInput struct {
 	RankNotNil bool  `json:"rankNotNil,omitempty"`
 
 	// "salePrice" field predicates.
-	SalePrice       *float64  `json:"saleprice,omitempty"`
-	SalePriceNEQ    *float64  `json:"salepriceNEQ,omitempty"`
-	SalePriceIn     []float64 `json:"salepriceIn,omitempty"`
-	SalePriceNotIn  []float64 `json:"salepriceNotIn,omitempty"`
-	SalePriceGT     *float64  `json:"salepriceGT,omitempty"`
-	SalePriceGTE    *float64  `json:"salepriceGTE,omitempty"`
-	SalePriceLT     *float64  `json:"salepriceLT,omitempty"`
-	SalePriceLTE    *float64  `json:"salepriceLTE,omitempty"`
-	SalePriceIsNil  bool      `json:"salepriceIsNil,omitempty"`
-	SalePriceNotNil bool      `json:"salepriceNotNil,omitempty"`
+	SalePrice      *float64  `json:"saleprice,omitempty"`
+	SalePriceNEQ   *float64  `json:"salepriceNEQ,omitempty"`
+	SalePriceIn    []float64 `json:"salepriceIn,omitempty"`
+	SalePriceNotIn []float64 `json:"salepriceNotIn,omitempty"`
+	SalePriceGT    *float64  `json:"salepriceGT,omitempty"`
+	SalePriceGTE   *float64  `json:"salepriceGTE,omitempty"`
+	SalePriceLT    *float64  `json:"salepriceLT,omitempty"`
+	SalePriceLTE   *float64  `json:"salepriceLTE,omitempty"`
 
 	// "order" field predicates.
 	Order      *int  `json:"order,omitempty"`
@@ -864,12 +862,6 @@ func (i *DopeWhereInput) P() (predicate.Dope, error) {
 	}
 	if i.SalePriceLTE != nil {
 		predicates = append(predicates, dope.SalePriceLTE(*i.SalePriceLTE))
-	}
-	if i.SalePriceIsNil {
-		predicates = append(predicates, dope.SalePriceIsNil())
-	}
-	if i.SalePriceNotNil {
-		predicates = append(predicates, dope.SalePriceNotNil())
 	}
 	if i.Order != nil {
 		predicates = append(predicates, dope.OrderEQ(*i.Order))

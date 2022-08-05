@@ -1955,8 +1955,6 @@ input DopeWhereInput {
   salepriceGTE: Float
   salepriceLT: Float
   salepriceLTE: Float
-  salepriceIsNil: Boolean
-  salepriceNotNil: Boolean
   
   """order field predicates"""
   order: Int
@@ -14016,22 +14014,6 @@ func (ec *executionContext) unmarshalInputDopeWhereInput(ctx context.Context, ob
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("salepriceLTE"))
 			it.SalePriceLTE, err = ec.unmarshalOFloat2ᚖfloat64(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "salepriceIsNil":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("salepriceIsNil"))
-			it.SalePriceIsNil, err = ec.unmarshalOBoolean2bool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "salepriceNotNil":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("salepriceNotNil"))
-			it.SalePriceNotNil, err = ec.unmarshalOBoolean2bool(ctx, v)
 			if err != nil {
 				return it, err
 			}

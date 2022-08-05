@@ -59,7 +59,7 @@ var (
 		{Name: "opened", Type: field.TypeBool, Default: false},
 		{Name: "score", Type: field.TypeInt, Nullable: true},
 		{Name: "rank", Type: field.TypeInt, Nullable: true},
-		{Name: "sale_price", Type: field.TypeFloat64, Nullable: true},
+		{Name: "sale_price", Type: field.TypeFloat64, Default: 0},
 		{Name: "order", Type: field.TypeInt},
 		{Name: "listing_dope_lastsales", Type: field.TypeString, Unique: true, Nullable: true},
 		{Name: "wallet_dopes", Type: field.TypeString, Nullable: true},

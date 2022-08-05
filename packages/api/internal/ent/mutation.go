@@ -1840,24 +1840,10 @@ func (m *DopeMutation) AddedSalePrice() (r float64, exists bool) {
 	return *v, true
 }
 
-// ClearSalePrice clears the value of the "salePrice" field.
-func (m *DopeMutation) ClearSalePrice() {
-	m.salePrice = nil
-	m.addsalePrice = nil
-	m.clearedFields[dope.FieldSalePrice] = struct{}{}
-}
-
-// SalePriceCleared returns if the "salePrice" field was cleared in this mutation.
-func (m *DopeMutation) SalePriceCleared() bool {
-	_, ok := m.clearedFields[dope.FieldSalePrice]
-	return ok
-}
-
 // ResetSalePrice resets all changes to the "salePrice" field.
 func (m *DopeMutation) ResetSalePrice() {
 	m.salePrice = nil
 	m.addsalePrice = nil
-	delete(m.clearedFields, dope.FieldSalePrice)
 }
 
 // SetOrder sets the "order" field.
@@ -2358,9 +2344,6 @@ func (m *DopeMutation) ClearedFields() []string {
 	if m.FieldCleared(dope.FieldRank) {
 		fields = append(fields, dope.FieldRank)
 	}
-	if m.FieldCleared(dope.FieldSalePrice) {
-		fields = append(fields, dope.FieldSalePrice)
-	}
 	return fields
 }
 
@@ -2380,9 +2363,6 @@ func (m *DopeMutation) ClearField(name string) error {
 		return nil
 	case dope.FieldRank:
 		m.ClearRank()
-		return nil
-	case dope.FieldSalePrice:
-		m.ClearSalePrice()
 		return nil
 	}
 	return fmt.Errorf("unknown Dope nullable field %s", name)

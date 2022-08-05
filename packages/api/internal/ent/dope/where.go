@@ -417,20 +417,6 @@ func SalePriceLTE(v float64) predicate.Dope {
 	})
 }
 
-// SalePriceIsNil applies the IsNil predicate on the "salePrice" field.
-func SalePriceIsNil() predicate.Dope {
-	return predicate.Dope(func(s *sql.Selector) {
-		s.Where(sql.IsNull(s.C(FieldSalePrice)))
-	})
-}
-
-// SalePriceNotNil applies the NotNil predicate on the "salePrice" field.
-func SalePriceNotNil() predicate.Dope {
-	return predicate.Dope(func(s *sql.Selector) {
-		s.Where(sql.NotNull(s.C(FieldSalePrice)))
-	})
-}
-
 // OrderEQ applies the EQ predicate on the "order" field.
 func OrderEQ(v int) predicate.Dope {
 	return predicate.Dope(func(s *sql.Selector) {

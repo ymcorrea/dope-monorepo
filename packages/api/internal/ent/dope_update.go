@@ -134,12 +134,6 @@ func (du *DopeUpdate) AddSalePrice(f float64) *DopeUpdate {
 	return du
 }
 
-// ClearSalePrice clears the value of the "salePrice" field.
-func (du *DopeUpdate) ClearSalePrice() *DopeUpdate {
-	du.mutation.ClearSalePrice()
-	return du
-}
-
 // SetWalletID sets the "wallet" edge to the Wallet entity by ID.
 func (du *DopeUpdate) SetWalletID(id string) *DopeUpdate {
 	du.mutation.SetWalletID(id)
@@ -429,12 +423,6 @@ func (du *DopeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
 			Type:   field.TypeFloat64,
 			Value:  value,
-			Column: dope.FieldSalePrice,
-		})
-	}
-	if du.mutation.SalePriceCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeFloat64,
 			Column: dope.FieldSalePrice,
 		})
 	}
@@ -773,12 +761,6 @@ func (duo *DopeUpdateOne) AddSalePrice(f float64) *DopeUpdateOne {
 	return duo
 }
 
-// ClearSalePrice clears the value of the "salePrice" field.
-func (duo *DopeUpdateOne) ClearSalePrice() *DopeUpdateOne {
-	duo.mutation.ClearSalePrice()
-	return duo
-}
-
 // SetWalletID sets the "wallet" edge to the Wallet entity by ID.
 func (duo *DopeUpdateOne) SetWalletID(id string) *DopeUpdateOne {
 	duo.mutation.SetWalletID(id)
@@ -1092,12 +1074,6 @@ func (duo *DopeUpdateOne) sqlSave(ctx context.Context) (_node *Dope, err error) 
 		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
 			Type:   field.TypeFloat64,
 			Value:  value,
-			Column: dope.FieldSalePrice,
-		})
-	}
-	if duo.mutation.SalePriceCleared() {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
-			Type:   field.TypeFloat64,
 			Column: dope.FieldSalePrice,
 		})
 	}

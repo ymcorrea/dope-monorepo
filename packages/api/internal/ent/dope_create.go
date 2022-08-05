@@ -274,6 +274,10 @@ func (dc *DopeCreate) defaults() {
 		v := dope.DefaultOpened
 		dc.mutation.SetOpened(v)
 	}
+	if _, ok := dc.mutation.SalePrice(); !ok {
+		v := dope.DefaultSalePrice
+		dc.mutation.SetSalePrice(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -283,6 +287,9 @@ func (dc *DopeCreate) check() error {
 	}
 	if _, ok := dc.mutation.Opened(); !ok {
 		return &ValidationError{Name: "opened", err: errors.New(`ent: missing required field "Dope.opened"`)}
+	}
+	if _, ok := dc.mutation.SalePrice(); !ok {
+		return &ValidationError{Name: "salePrice", err: errors.New(`ent: missing required field "Dope.salePrice"`)}
 	}
 	if _, ok := dc.mutation.Order(); !ok {
 		return &ValidationError{Name: "order", err: errors.New(`ent: missing required field "Dope.order"`)}
@@ -613,12 +620,6 @@ func (u *DopeUpsert) AddSalePrice(v float64) *DopeUpsert {
 	return u
 }
 
-// ClearSalePrice clears the value of the "salePrice" field.
-func (u *DopeUpsert) ClearSalePrice() *DopeUpsert {
-	u.SetNull(dope.FieldSalePrice)
-	return u
-}
-
 // SetOrder sets the "order" field.
 func (u *DopeUpsert) SetOrder(v int) *DopeUpsert {
 	u.Set(dope.FieldOrder, v)
@@ -792,13 +793,6 @@ func (u *DopeUpsertOne) AddSalePrice(v float64) *DopeUpsertOne {
 func (u *DopeUpsertOne) UpdateSalePrice() *DopeUpsertOne {
 	return u.Update(func(s *DopeUpsert) {
 		s.UpdateSalePrice()
-	})
-}
-
-// ClearSalePrice clears the value of the "salePrice" field.
-func (u *DopeUpsertOne) ClearSalePrice() *DopeUpsertOne {
-	return u.Update(func(s *DopeUpsert) {
-		s.ClearSalePrice()
 	})
 }
 
@@ -1144,13 +1138,6 @@ func (u *DopeUpsertBulk) AddSalePrice(v float64) *DopeUpsertBulk {
 func (u *DopeUpsertBulk) UpdateSalePrice() *DopeUpsertBulk {
 	return u.Update(func(s *DopeUpsert) {
 		s.UpdateSalePrice()
-	})
-}
-
-// ClearSalePrice clears the value of the "salePrice" field.
-func (u *DopeUpsertBulk) ClearSalePrice() *DopeUpsertBulk {
-	return u.Update(func(s *DopeUpsert) {
-		s.ClearSalePrice()
 	})
 }
 

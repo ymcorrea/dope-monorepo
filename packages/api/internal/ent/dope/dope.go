@@ -110,4 +110,6 @@ var (
 	DefaultClaimed bool
 	// DefaultOpened holds the default value on creation for the "opened" field.
 	DefaultOpened bool
+	// DefaultSalePrice holds the default value on creation for the "salePrice" field.
+	DefaultSalePrice float64
 )
