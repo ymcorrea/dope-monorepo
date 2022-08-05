@@ -6,10 +6,6 @@ The Dope Wars api consists of a golang service that exposes a graphql endpoint. 
 
 ### Database server
 
-```sh
-docker run --rm --name postgres-db -p 5432:5432 -e POSTGRES_PASSWORD=postgres -d postgres
-```
-
 ### Api
 
 To run the api + everything necessary:
@@ -43,7 +39,24 @@ Maintenance tasks to update information from the blockchain and external service
 
 To generate new smart contract bindings, add the abi to `packages/api/internal/contracts/abis` and run `go generate ./...`.
 
-### Updating the Database schema
+### Database
+
+The API uses PostgreSQL to hold information about our NFT items and other things.
+You can quickly run a postgres docker container by using the following command from a shell.
+
+```sh
+docker run --rm --name postgres-db -p 5432:5432 -e POSTGRES_PASSWORD=postgres -d postgres
+```
+
+#### Initializing the database
+
+There are SQL files inside of `./internal/ent/bootstrap` that can be used to start up your database. Once your postgres server is running, you can call the following Go command to add information to it.
+
+```sh
+go run internal/ent/_bootstrapDatabase/main.go
+```
+
+#### Updating DB schema
 
 The API uses ENT and Gqlgen to handle ORM and query duties. [You can learn more about using that combination of tools with go here.](https://betterprogramming.pub/implement-a-graphql-server-with-ent-and-gqlgen-in-go-8840f086b8a8)
 
