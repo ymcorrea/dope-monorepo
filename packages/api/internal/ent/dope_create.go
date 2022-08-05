@@ -82,6 +82,20 @@ func (dc *DopeCreate) SetNillableRank(i *int) *DopeCreate {
 	return dc
 }
 
+// SetSalePrice sets the "salePrice" field.
+func (dc *DopeCreate) SetSalePrice(f float64) *DopeCreate {
+	dc.mutation.SetSalePrice(f)
+	return dc
+}
+
+// SetNillableSalePrice sets the "salePrice" field if the given value is not nil.
+func (dc *DopeCreate) SetNillableSalePrice(f *float64) *DopeCreate {
+	if f != nil {
+		dc.SetSalePrice(*f)
+	}
+	return dc
+}
+
 // SetOrder sets the "order" field.
 func (dc *DopeCreate) SetOrder(i int) *DopeCreate {
 	dc.mutation.SetOrder(i)
@@ -342,6 +356,14 @@ func (dc *DopeCreate) createSpec() (*Dope, *sqlgraph.CreateSpec) {
 		})
 		_node.Rank = value
 	}
+	if value, ok := dc.mutation.SalePrice(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeFloat64,
+			Value:  value,
+			Column: dope.FieldSalePrice,
+		})
+		_node.SalePrice = value
+	}
 	if value, ok := dc.mutation.Order(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeInt,
@@ -573,6 +595,30 @@ func (u *DopeUpsert) ClearRank() *DopeUpsert {
 	return u
 }
 
+// SetSalePrice sets the "salePrice" field.
+func (u *DopeUpsert) SetSalePrice(v float64) *DopeUpsert {
+	u.Set(dope.FieldSalePrice, v)
+	return u
+}
+
+// UpdateSalePrice sets the "salePrice" field to the value that was provided on create.
+func (u *DopeUpsert) UpdateSalePrice() *DopeUpsert {
+	u.SetExcluded(dope.FieldSalePrice)
+	return u
+}
+
+// AddSalePrice adds v to the "salePrice" field.
+func (u *DopeUpsert) AddSalePrice(v float64) *DopeUpsert {
+	u.Add(dope.FieldSalePrice, v)
+	return u
+}
+
+// ClearSalePrice clears the value of the "salePrice" field.
+func (u *DopeUpsert) ClearSalePrice() *DopeUpsert {
+	u.SetNull(dope.FieldSalePrice)
+	return u
+}
+
 // SetOrder sets the "order" field.
 func (u *DopeUpsert) SetOrder(v int) *DopeUpsert {
 	u.Set(dope.FieldOrder, v)
@@ -725,6 +771,34 @@ func (u *DopeUpsertOne) UpdateRank() *DopeUpsertOne {
 func (u *DopeUpsertOne) ClearRank() *DopeUpsertOne {
 	return u.Update(func(s *DopeUpsert) {
 		s.ClearRank()
+	})
+}
+
+// SetSalePrice sets the "salePrice" field.
+func (u *DopeUpsertOne) SetSalePrice(v float64) *DopeUpsertOne {
+	return u.Update(func(s *DopeUpsert) {
+		s.SetSalePrice(v)
+	})
+}
+
+// AddSalePrice adds v to the "salePrice" field.
+func (u *DopeUpsertOne) AddSalePrice(v float64) *DopeUpsertOne {
+	return u.Update(func(s *DopeUpsert) {
+		s.AddSalePrice(v)
+	})
+}
+
+// UpdateSalePrice sets the "salePrice" field to the value that was provided on create.
+func (u *DopeUpsertOne) UpdateSalePrice() *DopeUpsertOne {
+	return u.Update(func(s *DopeUpsert) {
+		s.UpdateSalePrice()
+	})
+}
+
+// ClearSalePrice clears the value of the "salePrice" field.
+func (u *DopeUpsertOne) ClearSalePrice() *DopeUpsertOne {
+	return u.Update(func(s *DopeUpsert) {
+		s.ClearSalePrice()
 	})
 }
 
@@ -1049,6 +1123,34 @@ func (u *DopeUpsertBulk) UpdateRank() *DopeUpsertBulk {
 func (u *DopeUpsertBulk) ClearRank() *DopeUpsertBulk {
 	return u.Update(func(s *DopeUpsert) {
 		s.ClearRank()
+	})
+}
+
+// SetSalePrice sets the "salePrice" field.
+func (u *DopeUpsertBulk) SetSalePrice(v float64) *DopeUpsertBulk {
+	return u.Update(func(s *DopeUpsert) {
+		s.SetSalePrice(v)
+	})
+}
+
+// AddSalePrice adds v to the "salePrice" field.
+func (u *DopeUpsertBulk) AddSalePrice(v float64) *DopeUpsertBulk {
+	return u.Update(func(s *DopeUpsert) {
+		s.AddSalePrice(v)
+	})
+}
+
+// UpdateSalePrice sets the "salePrice" field to the value that was provided on create.
+func (u *DopeUpsertBulk) UpdateSalePrice() *DopeUpsertBulk {
+	return u.Update(func(s *DopeUpsert) {
+		s.UpdateSalePrice()
+	})
+}
+
+// ClearSalePrice clears the value of the "salePrice" field.
+func (u *DopeUpsertBulk) ClearSalePrice() *DopeUpsertBulk {
+	return u.Update(func(s *DopeUpsert) {
+		s.ClearSalePrice()
 	})
 }
 

@@ -643,6 +643,18 @@ type DopeWhereInput struct {
 	RankIsNil  bool  `json:"rankIsNil,omitempty"`
 	RankNotNil bool  `json:"rankNotNil,omitempty"`
 
+	// "salePrice" field predicates.
+	SalePrice       *float64  `json:"saleprice,omitempty"`
+	SalePriceNEQ    *float64  `json:"salepriceNEQ,omitempty"`
+	SalePriceIn     []float64 `json:"salepriceIn,omitempty"`
+	SalePriceNotIn  []float64 `json:"salepriceNotIn,omitempty"`
+	SalePriceGT     *float64  `json:"salepriceGT,omitempty"`
+	SalePriceGTE    *float64  `json:"salepriceGTE,omitempty"`
+	SalePriceLT     *float64  `json:"salepriceLT,omitempty"`
+	SalePriceLTE    *float64  `json:"salepriceLTE,omitempty"`
+	SalePriceIsNil  bool      `json:"salepriceIsNil,omitempty"`
+	SalePriceNotNil bool      `json:"salepriceNotNil,omitempty"`
+
 	// "order" field predicates.
 	Order      *int  `json:"order,omitempty"`
 	OrderNEQ   *int  `json:"orderNEQ,omitempty"`
@@ -828,6 +840,36 @@ func (i *DopeWhereInput) P() (predicate.Dope, error) {
 	}
 	if i.RankNotNil {
 		predicates = append(predicates, dope.RankNotNil())
+	}
+	if i.SalePrice != nil {
+		predicates = append(predicates, dope.SalePriceEQ(*i.SalePrice))
+	}
+	if i.SalePriceNEQ != nil {
+		predicates = append(predicates, dope.SalePriceNEQ(*i.SalePriceNEQ))
+	}
+	if len(i.SalePriceIn) > 0 {
+		predicates = append(predicates, dope.SalePriceIn(i.SalePriceIn...))
+	}
+	if len(i.SalePriceNotIn) > 0 {
+		predicates = append(predicates, dope.SalePriceNotIn(i.SalePriceNotIn...))
+	}
+	if i.SalePriceGT != nil {
+		predicates = append(predicates, dope.SalePriceGT(*i.SalePriceGT))
+	}
+	if i.SalePriceGTE != nil {
+		predicates = append(predicates, dope.SalePriceGTE(*i.SalePriceGTE))
+	}
+	if i.SalePriceLT != nil {
+		predicates = append(predicates, dope.SalePriceLT(*i.SalePriceLT))
+	}
+	if i.SalePriceLTE != nil {
+		predicates = append(predicates, dope.SalePriceLTE(*i.SalePriceLTE))
+	}
+	if i.SalePriceIsNil {
+		predicates = append(predicates, dope.SalePriceIsNil())
+	}
+	if i.SalePriceNotNil {
+		predicates = append(predicates, dope.SalePriceNotNil())
 	}
 	if i.Order != nil {
 		predicates = append(predicates, dope.OrderEQ(*i.Order))

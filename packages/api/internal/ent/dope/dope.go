@@ -15,6 +15,8 @@ const (
 	FieldScore = "score"
 	// FieldRank holds the string denoting the rank field in the database.
 	FieldRank = "rank"
+	// FieldSalePrice holds the string denoting the saleprice field in the database.
+	FieldSalePrice = "sale_price"
 	// FieldOrder holds the string denoting the order field in the database.
 	FieldOrder = "order"
 	// EdgeWallet holds the string denoting the wallet edge name in mutations.
@@ -71,6 +73,7 @@ var Columns = []string{
 	FieldOpened,
 	FieldScore,
 	FieldRank,
+	FieldSalePrice,
 	FieldOrder,
 }
 

@@ -186,7 +186,7 @@ func (d *Dope) Node(ctx context.Context) (node *Node, err error) {
 	node = &Node{
 		ID:     d.ID,
 		Type:   "Dope",
-		Fields: make([]*Field, 5),
+		Fields: make([]*Field, 6),
 		Edges:  make([]*Edge, 5),
 	}
 	var buf []byte
@@ -222,10 +222,18 @@ func (d *Dope) Node(ctx context.Context) (node *Node, err error) {
 		Name:  "rank",
 		Value: string(buf),
 	}
-	if buf, err = json.Marshal(d.Order); err != nil {
+	if buf, err = json.Marshal(d.SalePrice); err != nil {
 		return nil, err
 	}
 	node.Fields[4] = &Field{
+		Type:  "float64",
+		Name:  "salePrice",
+		Value: string(buf),
+	}
+	if buf, err = json.Marshal(d.Order); err != nil {
+		return nil, err
+	}
+	node.Fields[5] = &Field{
 		Type:  "int",
 		Name:  "order",
 		Value: string(buf),

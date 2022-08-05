@@ -1,3 +1,5 @@
+// The more direct way to run the ETH indexer on your local machine
+// without hitting a local webserver endpoint.
 package main
 
 import (

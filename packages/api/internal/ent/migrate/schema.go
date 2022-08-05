@@ -59,6 +59,7 @@ var (
 		{Name: "opened", Type: field.TypeBool, Default: false},
 		{Name: "score", Type: field.TypeInt, Nullable: true},
 		{Name: "rank", Type: field.TypeInt, Nullable: true},
+		{Name: "sale_price", Type: field.TypeFloat64, Nullable: true},
 		{Name: "order", Type: field.TypeInt},
 		{Name: "listing_dope_lastsales", Type: field.TypeString, Unique: true, Nullable: true},
 		{Name: "wallet_dopes", Type: field.TypeString, Nullable: true},
@@ -71,13 +72,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "dopes_listings_dope_lastsales",
-				Columns:    []*schema.Column{DopesColumns[6]},
+				Columns:    []*schema.Column{DopesColumns[7]},
 				RefColumns: []*schema.Column{ListingsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "dopes_wallets_dopes",
-				Columns:    []*schema.Column{DopesColumns[7]},
+				Columns:    []*schema.Column{DopesColumns[8]},
 				RefColumns: []*schema.Column{WalletsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},

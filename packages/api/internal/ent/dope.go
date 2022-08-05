@@ -26,6 +26,8 @@ type Dope struct {
 	Score int `json:"score,omitempty"`
 	// Rank holds the value of the "rank" field.
 	Rank int `json:"rank,omitempty"`
+	// SalePrice holds the value of the "salePrice" field.
+	SalePrice float64 `json:"salePrice,omitempty"`
 	// Order holds the value of the "order" field.
 	Order int `json:"order,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -119,6 +121,8 @@ func (*Dope) scanValues(columns []string) ([]interface{}, error) {
 		switch columns[i] {
 		case dope.FieldClaimed, dope.FieldOpened:
 			values[i] = new(sql.NullBool)
+		case dope.FieldSalePrice:
+			values[i] = new(sql.NullFloat64)
 		case dope.FieldScore, dope.FieldRank, dope.FieldOrder:
 			values[i] = new(sql.NullInt64)
 		case dope.FieldID:
@@ -171,6 +175,12 @@ func (d *Dope) assignValues(columns []string, values []interface{}) error {
 				return fmt.Errorf("unexpected type %T for field rank", values[i])
 			} else if value.Valid {
 				d.Rank = int(value.Int64)
+			}
+		case dope.FieldSalePrice:
+			if value, ok := values[i].(*sql.NullFloat64); !ok {
+				return fmt.Errorf("unexpected type %T for field salePrice", values[i])
+			} else if value.Valid {
+				d.SalePrice = value.Float64
 			}
 		case dope.FieldOrder:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -253,6 +263,8 @@ func (d *Dope) String() string {
 	builder.WriteString(fmt.Sprintf("%v", d.Score))
 	builder.WriteString(", rank=")
 	builder.WriteString(fmt.Sprintf("%v", d.Rank))
+	builder.WriteString(", salePrice=")
+	builder.WriteString(fmt.Sprintf("%v", d.SalePrice))
 	builder.WriteString(", order=")
 	builder.WriteString(fmt.Sprintf("%v", d.Order))
 	builder.WriteByte(')')

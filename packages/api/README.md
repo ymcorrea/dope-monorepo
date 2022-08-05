@@ -4,6 +4,12 @@ The Dope Wars api consists of a golang service that exposes a graphql endpoint. 
 
 ## Quick Start
 
+### Database server
+
+```sh
+docker run --rm --name postgres-db -p 5432:5432 -e POSTGRES_PASSWORD=postgres -d postgres
+```
+
 ### Api
 
 To run the api + everything necessary:
@@ -14,6 +20,7 @@ The server exposes the following endpoints:
 `http://localhost:8080/verify`
 
 ### Game
+
 To run the game server + everything necessary:
 ```docker-compose up game```
 

@@ -57,6 +57,9 @@ func newServer(ctx context.Context) (http.Handler, error) {
 	qSea := make(chan int, JOB_LIMIT)
 	handleJob(r, "/opensea-listings", jobs.OpenSeaListings, qSea)
 
+	qReservoir := make(chan int, JOB_LIMIT)
+	handleJob(r, "/reservoir-prices", jobs.ReservoirPrices, qReservoir)
+
 	qPaperBalance := make(chan int, JOB_LIMIT)
 	handleJob(r, "/paper-balances", jobs.PaperBalances, qPaperBalance)
 
