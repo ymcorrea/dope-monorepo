@@ -1452,8 +1452,6 @@ type DopeMutation struct {
 	addscore         *int
 	rank             *int
 	addrank          *int
-	salePrice        *float64
-	addsalePrice     *float64
 	_order           *int
 	add_order        *int
 	clearedFields    map[string]struct{}
@@ -1790,62 +1788,6 @@ func (m *DopeMutation) ResetRank() {
 	delete(m.clearedFields, dope.FieldRank)
 }
 
-// SetSalePrice sets the "salePrice" field.
-func (m *DopeMutation) SetSalePrice(f float64) {
-	m.salePrice = &f
-	m.addsalePrice = nil
-}
-
-// SalePrice returns the value of the "salePrice" field in the mutation.
-func (m *DopeMutation) SalePrice() (r float64, exists bool) {
-	v := m.salePrice
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldSalePrice returns the old "salePrice" field's value of the Dope entity.
-// If the Dope object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *DopeMutation) OldSalePrice(ctx context.Context) (v float64, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldSalePrice is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldSalePrice requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldSalePrice: %w", err)
-	}
-	return oldValue.SalePrice, nil
-}
-
-// AddSalePrice adds f to the "salePrice" field.
-func (m *DopeMutation) AddSalePrice(f float64) {
-	if m.addsalePrice != nil {
-		*m.addsalePrice += f
-	} else {
-		m.addsalePrice = &f
-	}
-}
-
-// AddedSalePrice returns the value that was added to the "salePrice" field in this mutation.
-func (m *DopeMutation) AddedSalePrice() (r float64, exists bool) {
-	v := m.addsalePrice
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// ResetSalePrice resets all changes to the "salePrice" field.
-func (m *DopeMutation) ResetSalePrice() {
-	m.salePrice = nil
-	m.addsalePrice = nil
-}
-
 // SetOrder sets the "order" field.
 func (m *DopeMutation) SetOrder(i int) {
 	m._order = &i
@@ -2146,7 +2088,7 @@ func (m *DopeMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *DopeMutation) Fields() []string {
-	fields := make([]string, 0, 6)
+	fields := make([]string, 0, 5)
 	if m.claimed != nil {
 		fields = append(fields, dope.FieldClaimed)
 	}
@@ -2158,9 +2100,6 @@ func (m *DopeMutation) Fields() []string {
 	}
 	if m.rank != nil {
 		fields = append(fields, dope.FieldRank)
-	}
-	if m.salePrice != nil {
-		fields = append(fields, dope.FieldSalePrice)
 	}
 	if m._order != nil {
 		fields = append(fields, dope.FieldOrder)
@@ -2181,8 +2120,6 @@ func (m *DopeMutation) Field(name string) (ent.Value, bool) {
 		return m.Score()
 	case dope.FieldRank:
 		return m.Rank()
-	case dope.FieldSalePrice:
-		return m.SalePrice()
 	case dope.FieldOrder:
 		return m.Order()
 	}
@@ -2202,8 +2139,6 @@ func (m *DopeMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldScore(ctx)
 	case dope.FieldRank:
 		return m.OldRank(ctx)
-	case dope.FieldSalePrice:
-		return m.OldSalePrice(ctx)
 	case dope.FieldOrder:
 		return m.OldOrder(ctx)
 	}
@@ -2243,13 +2178,6 @@ func (m *DopeMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetRank(v)
 		return nil
-	case dope.FieldSalePrice:
-		v, ok := value.(float64)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetSalePrice(v)
-		return nil
 	case dope.FieldOrder:
 		v, ok := value.(int)
 		if !ok {
@@ -2271,9 +2199,6 @@ func (m *DopeMutation) AddedFields() []string {
 	if m.addrank != nil {
 		fields = append(fields, dope.FieldRank)
 	}
-	if m.addsalePrice != nil {
-		fields = append(fields, dope.FieldSalePrice)
-	}
 	if m.add_order != nil {
 		fields = append(fields, dope.FieldOrder)
 	}
@@ -2289,8 +2214,6 @@ func (m *DopeMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedScore()
 	case dope.FieldRank:
 		return m.AddedRank()
-	case dope.FieldSalePrice:
-		return m.AddedSalePrice()
 	case dope.FieldOrder:
 		return m.AddedOrder()
 	}
@@ -2315,13 +2238,6 @@ func (m *DopeMutation) AddField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddRank(v)
-		return nil
-	case dope.FieldSalePrice:
-		v, ok := value.(float64)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.AddSalePrice(v)
 		return nil
 	case dope.FieldOrder:
 		v, ok := value.(int)
@@ -2383,9 +2299,6 @@ func (m *DopeMutation) ResetField(name string) error {
 		return nil
 	case dope.FieldRank:
 		m.ResetRank()
-		return nil
-	case dope.FieldSalePrice:
-		m.ResetSalePrice()
 		return nil
 	case dope.FieldOrder:
 		m.ResetOrder()

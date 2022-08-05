@@ -27,11 +27,6 @@ func (Dope) Fields() []ent.Field {
 			Annotations(
 				entgql.OrderField("RANK"),
 			),
-		field.Float("salePrice").
-			Default(0).
-			Annotations(
-				entgql.OrderField("SALE_PRICE"),
-			),
 		field.Int("order").
 			Immutable().
 			Annotations(

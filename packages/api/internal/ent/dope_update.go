@@ -113,27 +113,6 @@ func (du *DopeUpdate) ClearRank() *DopeUpdate {
 	return du
 }
 
-// SetSalePrice sets the "salePrice" field.
-func (du *DopeUpdate) SetSalePrice(f float64) *DopeUpdate {
-	du.mutation.ResetSalePrice()
-	du.mutation.SetSalePrice(f)
-	return du
-}
-
-// SetNillableSalePrice sets the "salePrice" field if the given value is not nil.
-func (du *DopeUpdate) SetNillableSalePrice(f *float64) *DopeUpdate {
-	if f != nil {
-		du.SetSalePrice(*f)
-	}
-	return du
-}
-
-// AddSalePrice adds f to the "salePrice" field.
-func (du *DopeUpdate) AddSalePrice(f float64) *DopeUpdate {
-	du.mutation.AddSalePrice(f)
-	return du
-}
-
 // SetWalletID sets the "wallet" edge to the Wallet entity by ID.
 func (du *DopeUpdate) SetWalletID(id string) *DopeUpdate {
 	du.mutation.SetWalletID(id)
@@ -410,20 +389,6 @@ func (du *DopeUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeInt,
 			Column: dope.FieldRank,
-		})
-	}
-	if value, ok := du.mutation.SalePrice(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeFloat64,
-			Value:  value,
-			Column: dope.FieldSalePrice,
-		})
-	}
-	if value, ok := du.mutation.AddedSalePrice(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeFloat64,
-			Value:  value,
-			Column: dope.FieldSalePrice,
 		})
 	}
 	if du.mutation.WalletCleared() {
@@ -740,27 +705,6 @@ func (duo *DopeUpdateOne) ClearRank() *DopeUpdateOne {
 	return duo
 }
 
-// SetSalePrice sets the "salePrice" field.
-func (duo *DopeUpdateOne) SetSalePrice(f float64) *DopeUpdateOne {
-	duo.mutation.ResetSalePrice()
-	duo.mutation.SetSalePrice(f)
-	return duo
-}
-
-// SetNillableSalePrice sets the "salePrice" field if the given value is not nil.
-func (duo *DopeUpdateOne) SetNillableSalePrice(f *float64) *DopeUpdateOne {
-	if f != nil {
-		duo.SetSalePrice(*f)
-	}
-	return duo
-}
-
-// AddSalePrice adds f to the "salePrice" field.
-func (duo *DopeUpdateOne) AddSalePrice(f float64) *DopeUpdateOne {
-	duo.mutation.AddSalePrice(f)
-	return duo
-}
-
 // SetWalletID sets the "wallet" edge to the Wallet entity by ID.
 func (duo *DopeUpdateOne) SetWalletID(id string) *DopeUpdateOne {
 	duo.mutation.SetWalletID(id)
@@ -1061,20 +1005,6 @@ func (duo *DopeUpdateOne) sqlSave(ctx context.Context) (_node *Dope, err error) 
 		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeInt,
 			Column: dope.FieldRank,
-		})
-	}
-	if value, ok := duo.mutation.SalePrice(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeFloat64,
-			Value:  value,
-			Column: dope.FieldSalePrice,
-		})
-	}
-	if value, ok := duo.mutation.AddedSalePrice(); ok {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
-			Type:   field.TypeFloat64,
-			Value:  value,
-			Column: dope.FieldSalePrice,
 		})
 	}
 	if duo.mutation.WalletCleared() {

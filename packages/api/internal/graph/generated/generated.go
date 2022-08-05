@@ -1946,16 +1946,6 @@ input DopeWhereInput {
   rankIsNil: Boolean
   rankNotNil: Boolean
   
-  """salePrice field predicates"""
-  saleprice: Float
-  salepriceNEQ: Float
-  salepriceIn: [Float!]
-  salepriceNotIn: [Float!]
-  salepriceGT: Float
-  salepriceGTE: Float
-  salepriceLT: Float
-  salepriceLTE: Float
-  
   """order field predicates"""
   order: Int
   orderNEQ: Int
@@ -13953,70 +13943,6 @@ func (ec *executionContext) unmarshalInputDopeWhereInput(ctx context.Context, ob
 			if err != nil {
 				return it, err
 			}
-		case "saleprice":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("saleprice"))
-			it.SalePrice, err = ec.unmarshalOFloat2ᚖfloat64(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "salepriceNEQ":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("salepriceNEQ"))
-			it.SalePriceNEQ, err = ec.unmarshalOFloat2ᚖfloat64(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "salepriceIn":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("salepriceIn"))
-			it.SalePriceIn, err = ec.unmarshalOFloat2ᚕfloat64ᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "salepriceNotIn":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("salepriceNotIn"))
-			it.SalePriceNotIn, err = ec.unmarshalOFloat2ᚕfloat64ᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "salepriceGT":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("salepriceGT"))
-			it.SalePriceGT, err = ec.unmarshalOFloat2ᚖfloat64(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "salepriceGTE":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("salepriceGTE"))
-			it.SalePriceGTE, err = ec.unmarshalOFloat2ᚖfloat64(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "salepriceLT":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("salepriceLT"))
-			it.SalePriceLT, err = ec.unmarshalOFloat2ᚖfloat64(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "salepriceLTE":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("salepriceLTE"))
-			it.SalePriceLTE, err = ec.unmarshalOFloat2ᚖfloat64(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "order":
 			var err error
 
@@ -23049,21 +22975,6 @@ func (ec *executionContext) unmarshalNEventWhereInput2ᚖgithubᚗcomᚋdopedao�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNFloat2float64(ctx context.Context, v interface{}) (float64, error) {
-	res, err := graphql.UnmarshalFloatContext(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNFloat2float64(ctx context.Context, sel ast.SelectionSet, v float64) graphql.Marshaler {
-	res := graphql.MarshalFloatContext(v)
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return graphql.WrapContextMarshaler(ctx, res)
-}
-
 func (ec *executionContext) unmarshalNGameHustlerItemWhereInput2ᚖgithubᚗcomᚋdopedaoᚋdopeᚑmonorepoᚋpackagesᚋapiᚋinternalᚋentᚐGameHustlerItemWhereInput(ctx context.Context, v interface{}) (*ent.GameHustlerItemWhereInput, error) {
 	res, err := ec.unmarshalInputGameHustlerItemWhereInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
@@ -24437,60 +24348,6 @@ func (ec *executionContext) unmarshalOEventWhereInput2ᚖgithubᚗcomᚋdopedao�
 	}
 	res, err := ec.unmarshalInputEventWhereInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalOFloat2ᚕfloat64ᚄ(ctx context.Context, v interface{}) ([]float64, error) {
-	if v == nil {
-		return nil, nil
-	}
-	var vSlice []interface{}
-	if v != nil {
-		vSlice = graphql.CoerceList(v)
-	}
-	var err error
-	res := make([]float64, len(vSlice))
-	for i := range vSlice {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNFloat2float64(ctx, vSlice[i])
-		if err != nil {
-			return nil, err
-		}
-	}
-	return res, nil
-}
-
-func (ec *executionContext) marshalOFloat2ᚕfloat64ᚄ(ctx context.Context, sel ast.SelectionSet, v []float64) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	for i := range v {
-		ret[i] = ec.marshalNFloat2float64(ctx, sel, v[i])
-	}
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
-func (ec *executionContext) unmarshalOFloat2ᚖfloat64(ctx context.Context, v interface{}) (*float64, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := graphql.UnmarshalFloatContext(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOFloat2ᚖfloat64(ctx context.Context, sel ast.SelectionSet, v *float64) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	res := graphql.MarshalFloatContext(*v)
-	return graphql.WrapContextMarshaler(ctx, res)
 }
 
 func (ec *executionContext) unmarshalOGameHustlerItemWhereInput2ᚕᚖgithubᚗcomᚋdopedaoᚋdopeᚑmonorepoᚋpackagesᚋapiᚋinternalᚋentᚐGameHustlerItemWhereInputᚄ(ctx context.Context, v interface{}) ([]*ent.GameHustlerItemWhereInput, error) {

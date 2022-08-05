@@ -904,16 +904,6 @@ var (
 			}
 		},
 	}
-	// DopeOrderFieldSalePrice orders Dope by salePrice.
-	DopeOrderFieldSalePrice = &DopeOrderField{
-		field: dope.FieldSalePrice,
-		toCursor: func(d *Dope) Cursor {
-			return Cursor{
-				ID:    d.ID,
-				Value: d.SalePrice,
-			}
-		},
-	}
 	// DopeOrderFieldOrder orders Dope by order.
 	DopeOrderFieldOrder = &DopeOrderField{
 		field: dope.FieldOrder,
@@ -932,8 +922,6 @@ func (f DopeOrderField) String() string {
 	switch f.field {
 	case dope.FieldRank:
 		str = "RANK"
-	case dope.FieldSalePrice:
-		str = "SALE_PRICE"
 	case dope.FieldOrder:
 		str = "ID"
 	}
@@ -954,8 +942,6 @@ func (f *DopeOrderField) UnmarshalGQL(v interface{}) error {
 	switch str {
 	case "RANK":
 		*f = *DopeOrderFieldRank
-	case "SALE_PRICE":
-		*f = *DopeOrderFieldSalePrice
 	case "ID":
 		*f = *DopeOrderFieldOrder
 	default:

@@ -442,16 +442,6 @@ input DopeWhereInput {
   rankIsNil: Boolean
   rankNotNil: Boolean
   
-  """salePrice field predicates"""
-  saleprice: Float
-  salepriceNEQ: Float
-  salepriceIn: [Float!]
-  salepriceNotIn: [Float!]
-  salepriceGT: Float
-  salepriceGTE: Float
-  salepriceLT: Float
-  salepriceLTE: Float
-  
   """order field predicates"""
   order: Int
   orderNEQ: Int

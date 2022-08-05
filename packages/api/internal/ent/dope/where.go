@@ -119,13 +119,6 @@ func Rank(v int) predicate.Dope {
 	})
 }
 
-// SalePrice applies equality check predicate on the "salePrice" field. It's identical to SalePriceEQ.
-func SalePrice(v float64) predicate.Dope {
-	return predicate.Dope(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldSalePrice), v))
-	})
-}
-
 // Order applies equality check predicate on the "order" field. It's identical to OrderEQ.
 func Order(v int) predicate.Dope {
 	return predicate.Dope(func(s *sql.Selector) {
@@ -338,82 +331,6 @@ func RankIsNil() predicate.Dope {
 func RankNotNil() predicate.Dope {
 	return predicate.Dope(func(s *sql.Selector) {
 		s.Where(sql.NotNull(s.C(FieldRank)))
-	})
-}
-
-// SalePriceEQ applies the EQ predicate on the "salePrice" field.
-func SalePriceEQ(v float64) predicate.Dope {
-	return predicate.Dope(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldSalePrice), v))
-	})
-}
-
-// SalePriceNEQ applies the NEQ predicate on the "salePrice" field.
-func SalePriceNEQ(v float64) predicate.Dope {
-	return predicate.Dope(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldSalePrice), v))
-	})
-}
-
-// SalePriceIn applies the In predicate on the "salePrice" field.
-func SalePriceIn(vs ...float64) predicate.Dope {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Dope(func(s *sql.Selector) {
-		// if not arguments were provided, append the FALSE constants,
-		// since we can't apply "IN ()". This will make this predicate falsy.
-		if len(v) == 0 {
-			s.Where(sql.False())
-			return
-		}
-		s.Where(sql.In(s.C(FieldSalePrice), v...))
-	})
-}
-
-// SalePriceNotIn applies the NotIn predicate on the "salePrice" field.
-func SalePriceNotIn(vs ...float64) predicate.Dope {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Dope(func(s *sql.Selector) {
-		// if not arguments were provided, append the FALSE constants,
-		// since we can't apply "IN ()". This will make this predicate falsy.
-		if len(v) == 0 {
-			s.Where(sql.False())
-			return
-		}
-		s.Where(sql.NotIn(s.C(FieldSalePrice), v...))
-	})
-}
-
-// SalePriceGT applies the GT predicate on the "salePrice" field.
-func SalePriceGT(v float64) predicate.Dope {
-	return predicate.Dope(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldSalePrice), v))
-	})
-}
-
-// SalePriceGTE applies the GTE predicate on the "salePrice" field.
-func SalePriceGTE(v float64) predicate.Dope {
-	return predicate.Dope(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldSalePrice), v))
-	})
-}
-
-// SalePriceLT applies the LT predicate on the "salePrice" field.
-func SalePriceLT(v float64) predicate.Dope {
-	return predicate.Dope(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldSalePrice), v))
-	})
-}
-
-// SalePriceLTE applies the LTE predicate on the "salePrice" field.
-func SalePriceLTE(v float64) predicate.Dope {
-	return predicate.Dope(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldSalePrice), v))
 	})
 }
 
