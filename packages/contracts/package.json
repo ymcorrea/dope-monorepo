@@ -4,7 +4,7 @@
   "author": "Tarrence van As",
   "license": "GPL-3.0-or-later",
   "version": "1.0.0",
-  "description": "Constracts for DOPE, HUSTLERS, GEAR, etc",
+  "description": "Contracts for DOPE, HUSTLERS, GEAR, etc",
   "files": [
     "*.sol",
     "dist/**/*"
