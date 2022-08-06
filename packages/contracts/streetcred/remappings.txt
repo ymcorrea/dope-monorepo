@@ -1,2 +1,3 @@
 openzeppelin-contracts/=lib/openzeppelin-contracts/contracts/
 rollcall/=lib/rollcall/src/
+forge-optimism/=lib/forge-optimism/src
