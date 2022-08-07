@@ -34,7 +34,6 @@ git submodule init
 
 ---
 
-
 ## Working with contracts in force
 
 ### Build contracts
@@ -46,7 +45,7 @@ forge build
 ### Run tests
 
 ```sh
-forge test --vvv
+forge test
 ```
 
 ## Adding a new contract
