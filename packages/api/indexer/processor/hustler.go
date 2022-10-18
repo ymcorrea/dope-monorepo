@@ -22,11 +22,12 @@ import (
 )
 
 const (
-	MaleBody   uint8 = 0
-	FemaleBody uint8 = 1
-	MaleHair   uint8 = 2
-	FemaleHair uint8 = 3
-	Beard      uint8 = 4
+	MaleBody         uint8  = 0
+	FemaleBody       uint8  = 1
+	MaleHair         uint8  = 2
+	FemaleHair       uint8  = 3
+	Beard            uint8  = 4
+	OldestHustlerAge uint64 = 1637443660
 )
 
 var (
@@ -335,10 +336,12 @@ func (p *HustlerProcessor) ProcessTransferSingle(ctx context.Context, e bindings
 				Create().
 				SetID(e.Id.String())
 
-			// Reset age for non-ogs on transfer
 			typ := hustler.TypeREGULAR
 			if e.Id.Cmp(big.NewInt(500)) == -1 {
 				typ = hustler.TypeORIGINAL_GANGSTA
+				chain = chain.SetAge(OldestHustlerAge) // oldest OG age
+			} else {
+				// Reset age for non-ogs
 				chain = chain.SetAge(block.Time())
 			}
 
