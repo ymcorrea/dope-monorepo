@@ -16,6 +16,7 @@ import (
 	"github.com/dopedao/dope-monorepo/packages/api/internal/ent/schema"
 	"github.com/dopedao/dope-monorepo/packages/api/internal/ent/wallet"
 	"github.com/dopedao/dope-monorepo/packages/api/internal/ent/walletitems"
+	"github.com/dopedao/dope-monorepo/packages/api/internal/logger"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -57,6 +58,37 @@ func (p *SwapMeetProcessor) Setup(address common.Address, eth interface {
 }
 
 func (p *SwapMeetProcessor) ProcessSetRle(ctx context.Context, e bindings.SwapMeetSetRle) (func(tx *ent.Tx) error, error) {
+	metadata, err := p.Contract.TokenURI(nil, e.Id)
+	if err != nil {
+		// This can fail because the TokenURI data is so large that
+		// our API does not return it.
+		//
+		// If that's the case we do not return an error, instead
+		// choosing to insert a blank entry to the database, so we can
+		// continue indexing Hustlers and make them appear in the database.
+		//
+		// This isn't the most optimal solution, but it's better than the
+		// entire site bricking and people complaining their Hustlers
+		// are not in their inventory.
+		//
+		// -- faces
+		_, log := logger.LogFor(ctx)
+		log.Warn().Msgf("failed getting TokenURI during ProcessSetRle %s metadata: %w", e.Id.String(), err)
+		return func(tx *ent.Tx) error {
+			if err := tx.Item.Create().
+				SetID(e.Id.String()).
+				SetTier(item.TierCOMMON).
+				SetType("UNKNOWN").
+				SetName("UNKNOWN").
+				OnConflictColumns(item.FieldID).
+				UpdateNewValues().
+				Exec(ctx); err != nil {
+				return fmt.Errorf("failed adding generic Item inside ProcessSetRle %s rles: %w", e.Id.String(), err)
+			}
+			return nil
+		}, nil
+	}
+
 	male, err := p.Contract.TokenRle(nil, e.Id, 0)
 	if err != nil {
 		return nil, fmt.Errorf("getting item %s male rle: %w", e.Id.String(), err)
@@ -65,11 +97,6 @@ func (p *SwapMeetProcessor) ProcessSetRle(ctx context.Context, e bindings.SwapMe
 	female, err := p.Contract.TokenRle(nil, e.Id, 1)
 	if err != nil {
 		return nil, fmt.Errorf("getting item %s female rle: %w", e.Id.String(), err)
-	}
-
-	metadata, err := p.Contract.TokenURI(nil, e.Id)
-	if err != nil {
-		return nil, fmt.Errorf("getting item %s metadata: %w", e.Id.String(), err)
 	}
 
 	decoded, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(metadata, "data:application/json;base64,"))
@@ -89,7 +116,7 @@ func (p *SwapMeetProcessor) ProcessSetRle(ctx context.Context, e bindings.SwapMe
 		for _, a := range parsed.Attributes {
 			v, err := strconv.Unquote(string(a.Value))
 			if err != nil {
-				return fmt.Errorf("parsing attribuet value %v+: %w", a.Value, err)
+				return fmt.Errorf("parsing attribute value %v+: %w", a.Value, err)
 			}
 
 			switch a.Type {
