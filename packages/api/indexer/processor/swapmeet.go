@@ -106,7 +106,7 @@ func (p *SwapMeetProcessor) ProcessSetRle(ctx context.Context, e bindings.SwapMe
 
 	var parsed Metadata
 	if err := json.Unmarshal(decoded, &parsed); err != nil {
-		return nil, fmt.Errorf("unmarshalling metadata: %w", err)
+		return nil, fmt.Errorf("swapmeet unmarshalling metadata: %w", err)
 	}
 
 	return func(tx *ent.Tx) error {

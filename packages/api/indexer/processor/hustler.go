@@ -390,7 +390,7 @@ func refreshEquipment(ctx context.Context, eth interface {
 
 	var parsed Metadata
 	if err := json.Unmarshal(decoded, &parsed); err != nil {
-		return fmt.Errorf("unmarshalling metadata: %w", err)
+		return fmt.Errorf("hustler unmarshalling metadata: %w", err)
 	}
 
 	u := tx.Hustler.Update().
