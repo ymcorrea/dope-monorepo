@@ -146,17 +146,23 @@ func (p *HustlerProcessor) ProcessMetadataUpdate(ctx context.Context, e bindings
 
 	metadata, err := p.Contract.TokenURI(nil, e.Id)
 	if err != nil {
-		return nil, fmt.Errorf("getting metadata item rle for id: %s: %w", e.Id, err)
+		return nil, fmt.Errorf("hustler: getting metadata item rle for id: %s: %w", e.Id, err)
 	}
 
 	decoded, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(metadata, "data:application/json;base64,"))
 	if err != nil {
-		return nil, fmt.Errorf("decoding metadata: %w", err)
+		return nil, fmt.Errorf("hustler: decoding metadata: %w", err)
 	}
 
+	safeStr := cleanJsonString(string(decoded))
+
 	var parsed Metadata
-	if err := json.Unmarshal(decoded, &parsed); err != nil {
-		log.Err(err).Str("txn", e.Raw.TxHash.Hex()).Msg("Unmarshalling metadata")
+	if err := json.Unmarshal([]byte(safeStr), &parsed); err != nil {
+		log.
+			Err(err).
+			Str("txn", e.Raw.TxHash.Hex()).
+			Str("json", string(safeStr)).
+			Msg("hustler: unmarshalling metadata")
 		return nil, nil
 	}
 
@@ -230,15 +236,17 @@ func (p *HustlerProcessor) ProcessMetadataUpdate(ctx context.Context, e bindings
 
 	block, err := p.Eth.BlockByNumber(ctx, new(big.Int).SetUint64(e.Raw.BlockNumber))
 	if err != nil {
-		return nil, fmt.Errorf("updating hustler %s metadata: %w", e.Id.String(), err)
+		return nil, fmt.Errorf("Eth.ByBlockNumber ProcessMetadataUpdate updating hustler %s metadata: %w", e.Id.String(), err)
 	}
+
+	safeName := cleanJsonString(meta.Name)
 
 	return func(tx *ent.Tx) error {
 		if err := tx.Hustler.Create().
 			SetID(e.Id.String()).
 			SetType(typ).
 			SetAge(block.Time()).
-			SetName(meta.Name).
+			SetName(safeName).
 			SetBackground(hex.EncodeToString(meta.Background[:])).
 			SetColor(hex.EncodeToString(meta.Color[:])).
 			SetSex(sex).
@@ -268,11 +276,21 @@ func (p *HustlerProcessor) ProcessMetadataUpdate(ctx context.Context, e bindings
 			OnConflictColumns(hustler.FieldID).
 			UpdateNewValues().
 			Exec(ctx); err != nil {
-			return fmt.Errorf("updating hustler %s metadata: %w", e.Id.String(), err)
+			log.Debug().
+				Str("safeStr", safeStr).
+				Str("name", safeName).
+				Msg("Failed Saving Hustler")
+			return fmt.Errorf("ProcessMetadataUpdate ent tx updating hustler %s metadata: %w", e.Id.String(), err)
 		}
 
 		return nil
 	}, nil
+}
+
+// Nasty Hustlers put bad unicode and null chars in things.
+// We have to clean it up or it breaks our system.
+func cleanJsonString(json string) string {
+	return strings.ReplaceAll(strings.ToValidUTF8(json, ""), "\x00", "")
 }
 
 func (p *HustlerProcessor) ProcessTransferBatch(ctx context.Context, e bindings.HustlerTransferBatch) (func(tx *ent.Tx) error, error) {
@@ -301,7 +319,7 @@ func (p *HustlerProcessor) ProcessTransferBatch(ctx context.Context, e bindings.
 func (p *HustlerProcessor) ProcessTransferSingle(ctx context.Context, e bindings.HustlerTransferSingle) (func(tx *ent.Tx) error, error) {
 	block, err := p.Eth.BlockByNumber(ctx, new(big.Int).SetUint64(e.Raw.BlockNumber))
 	if err != nil {
-		return nil, fmt.Errorf("updating hustler %s metadata: %w", e.Id.String(), err)
+		return nil, fmt.Errorf("ProcessTransferSingle updating hustler %s metadata: %w", e.Id.String(), err)
 	}
 
 	return func(tx *ent.Tx) error {
@@ -388,8 +406,10 @@ func refreshEquipment(ctx context.Context, eth interface {
 		return fmt.Errorf("decoding metadata: %w", err)
 	}
 
+	safeStr := cleanJsonString(string(decoded))
+
 	var parsed Metadata
-	if err := json.Unmarshal(decoded, &parsed); err != nil {
+	if err := json.Unmarshal([]byte(safeStr), &parsed); err != nil {
 		return fmt.Errorf("hustler unmarshalling metadata: %w", err)
 	}
 
