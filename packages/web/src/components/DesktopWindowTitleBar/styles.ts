@@ -24,7 +24,7 @@ export const RightColumn = styled.div`
   display: flex;
   align-items: center;
 
-  div:first-child {
+  div:first-of-type {
     @media (max-width: 640px) {
       display: none;
     }

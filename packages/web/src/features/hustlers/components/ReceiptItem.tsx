@@ -10,7 +10,7 @@ export const ReceiptItem = styled.div<{
   border-bottom-style: solid;
   border-bottom-color: var(--gray-00);
   border-bottom-width: ${({ hideUnderline }) => (hideUnderline ? '0' : '2px')};
-  div:first-child {
+  div:first-of-type {
     width: 32px;
     height: 32px;
     margin-right:8px;
