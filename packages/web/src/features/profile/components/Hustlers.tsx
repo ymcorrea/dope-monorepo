@@ -41,8 +41,11 @@ const HustlerFooter = ({ id }: { id: string }) => (
   </PanelFooter>
 );
 
-const Hustlers = ({ searchValue }: { searchValue: string }) => {
+const Hustlers = ({ searchValue }: { searchValue?: string | null }) => {
   const { account } = useWeb3React();
+  
+  // If we don't do this unnamed hustlers won't show up
+  if (searchValue?.trim.length === 0) { searchValue = null; }
 
   const { data, hasNextPage, isFetching, fetchNextPage } = useInfiniteProfileHustlersQuery(
     {

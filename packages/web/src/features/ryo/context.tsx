@@ -54,7 +54,7 @@ const RollYourOwnProvider = ({ children }: { children: ReactNode }) => {
     contract: dopeWarsContract,
     method: 'have_turn',
   });
-  console.log('data', data, error);
+  // console.log('data', data, error);
 
   const { money, ownedItems } = useMemo(() => {
     if (!userStateData) {
