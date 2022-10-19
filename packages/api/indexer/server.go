@@ -15,7 +15,6 @@ import (
 // Launch a new Indexer HTTP Server because this is hosted on GCP
 // App Engine Standard Edition.
 //
-//
 // The Indexer reads info about DOPE NFT assets to place in a Postgres Database.
 func NewServer(ctx context.Context, drv *sql.Driver, network string) (http.Handler, error) {
 	_, log := logger.LogFor(ctx)
@@ -42,6 +41,7 @@ func NewServer(ctx context.Context, drv *sql.Driver, network string) (http.Handl
 		for _, c := range Config[network] {
 			switch c := c.(type) {
 			case EthConfig:
+				log.Debug().Msgf("Starting %v", c)
 				eth := NewEthereumIndexer(ctx, dbClient, c)
 				go eth.Sync(ctx)
 			}

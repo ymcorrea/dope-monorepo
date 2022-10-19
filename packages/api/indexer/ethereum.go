@@ -94,15 +94,15 @@ func eventLogCommitter(ctx context.Context, c *Contract, l types.Log, committer 
 					SetHash(l.TxHash).
 					SetIndex(uint64(l.Index)).
 					Exec(ctx); err != nil {
-					return fmt.Errorf("creating event log %s: %w", id, err)
+					return fmt.Errorf("eventLogCommitter: creating event log %s: %w", id, err)
 				}
 
 				return committer(tx)
 			}
 
-			return fmt.Errorf("getting event log %s: %w", id, err)
+			return fmt.Errorf("eventLogCommitter: getting event log %s: %w", id, err)
 		}
-		log.Warn().Msgf("duplicate event log %s", id)
+		log.Warn().Msgf("eventLogCommitter: duplicate event log %s", id)
 		return nil
 	}
 }
