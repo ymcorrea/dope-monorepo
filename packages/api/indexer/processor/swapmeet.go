@@ -73,7 +73,7 @@ func (p *SwapMeetProcessor) ProcessSetRle(ctx context.Context, e bindings.SwapMe
 		//
 		// -- faces
 		_, log := logger.LogFor(ctx)
-		log.Warn().Msgf("failed getting TokenURI during ProcessSetRle %s metadata: %w", e.Id.String(), err)
+		log.Warn().Msgf("failed getting TokenURI during ProcessSetRle %s metadata: %v", e.Id.String(), err)
 		return func(tx *ent.Tx) error {
 			if err := tx.Item.Create().
 				SetID(e.Id.String()).
@@ -168,7 +168,7 @@ func (p *SwapMeetProcessor) ProcessSetRle(ctx context.Context, e bindings.SwapMe
 
 func (p *SwapMeetProcessor) ProcessTransferBatch(ctx context.Context, e bindings.SwapMeetTransferBatch) (func(tx *ent.Tx) error, error) {
 	return func(tx *ent.Tx) error {
-		if err := ensureWallet(ctx, tx, e.To); err != nil {
+		if err := ensureWalletExists(ctx, tx, e.To); err != nil {
 			return fmt.Errorf("swapmeet: %w", err)
 		}
 
@@ -192,7 +192,7 @@ func (p *SwapMeetProcessor) ProcessTransferBatch(ctx context.Context, e bindings
 					SetWalletID(e.To.Hex()).
 					SetItemID(id.String()).
 					OnConflictColumns(walletitems.FieldID).
-					AddBalance(schema.BigInt{Int: e.Values[i]}).
+					UpdateNewValues().
 					Exec(ctx); err != nil {
 					return fmt.Errorf("swapmeet: upsert wallet items balance: %w", err)
 				}
@@ -208,7 +208,7 @@ func (p *SwapMeetProcessor) ProcessTransferBatch(ctx context.Context, e bindings
 			}
 
 			for _, h := range wallet.Edges.Hustlers {
-				if err := refreshEquipment(ctx, p.Eth, tx, h.ID, hustlerAddr, new(big.Int).SetUint64(e.Raw.BlockNumber)); err != nil {
+				if err := RefreshEquipment(ctx, p.Eth, tx, h.ID, hustlerAddr, new(big.Int).SetUint64(e.Raw.BlockNumber)); err != nil {
 					return err
 				}
 			}
@@ -222,7 +222,7 @@ func (p *SwapMeetProcessor) ProcessTransferBatch(ctx context.Context, e bindings
 			}
 
 			for _, h := range wallet.Edges.Hustlers {
-				if err := refreshEquipment(ctx, p.Eth, tx, h.ID, hustlerAddr, new(big.Int).SetUint64(e.Raw.BlockNumber)); err != nil {
+				if err := RefreshEquipment(ctx, p.Eth, tx, h.ID, hustlerAddr, new(big.Int).SetUint64(e.Raw.BlockNumber)); err != nil {
 					return err
 				}
 			}
@@ -234,7 +234,7 @@ func (p *SwapMeetProcessor) ProcessTransferBatch(ctx context.Context, e bindings
 
 func (p *SwapMeetProcessor) ProcessTransferSingle(ctx context.Context, e bindings.SwapMeetTransferSingle) (func(tx *ent.Tx) error, error) {
 	return func(tx *ent.Tx) error {
-		if err := ensureWallet(ctx, tx, e.To); err != nil {
+		if err := ensureWalletExists(ctx, tx, e.To); err != nil {
 			return fmt.Errorf("swapmeet: %w", err)
 		}
 
@@ -270,7 +270,7 @@ func (p *SwapMeetProcessor) ProcessTransferSingle(ctx context.Context, e binding
 			}
 
 			for _, h := range wallet.Edges.Hustlers {
-				if err := refreshEquipment(ctx, p.Eth, tx, h.ID, hustlerAddr, new(big.Int).SetUint64(e.Raw.BlockNumber)); err != nil {
+				if err := RefreshEquipment(ctx, p.Eth, tx, h.ID, hustlerAddr, new(big.Int).SetUint64(e.Raw.BlockNumber)); err != nil {
 					return err
 				}
 			}
@@ -284,7 +284,7 @@ func (p *SwapMeetProcessor) ProcessTransferSingle(ctx context.Context, e binding
 			}
 
 			for _, h := range wallet.Edges.Hustlers {
-				if err := refreshEquipment(ctx, p.Eth, tx, h.ID, hustlerAddr, new(big.Int).SetUint64(e.Raw.BlockNumber)); err != nil {
+				if err := RefreshEquipment(ctx, p.Eth, tx, h.ID, hustlerAddr, new(big.Int).SetUint64(e.Raw.BlockNumber)); err != nil {
 					return err
 				}
 			}

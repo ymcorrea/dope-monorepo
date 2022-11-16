@@ -137,7 +137,10 @@ func (p *HustlerProcessor) ProcessAddRles(ctx context.Context, e bindings.Hustle
 	}, nil
 }
 
-func (p *HustlerProcessor) ProcessMetadataUpdate(ctx context.Context, e bindings.HustlerMetadataUpdate) (func(tx *ent.Tx) error, error) {
+func (p *HustlerProcessor) ProcessMetadataUpdate(
+	ctx context.Context,
+	e bindings.HustlerMetadataUpdate,
+) (func(tx *ent.Tx) error, error) {
 	ctx, log := logger.LogFor(ctx)
 	meta, err := p.Contract.Metadata(nil, e.Id)
 	if err != nil {
@@ -154,7 +157,7 @@ func (p *HustlerProcessor) ProcessMetadataUpdate(ctx context.Context, e bindings
 		return nil, fmt.Errorf("hustler: decoding metadata: %w", err)
 	}
 
-	safeStr := cleanJsonString(string(decoded))
+	safeStr := CleanJsonString(string(decoded))
 
 	var parsed Metadata
 	if err := json.Unmarshal([]byte(safeStr), &parsed); err != nil {
@@ -239,7 +242,7 @@ func (p *HustlerProcessor) ProcessMetadataUpdate(ctx context.Context, e bindings
 		return nil, fmt.Errorf("Eth.ByBlockNumber ProcessMetadataUpdate updating hustler %s metadata: %w", e.Id.String(), err)
 	}
 
-	safeName := cleanJsonString(meta.Name)
+	safeName := CleanJsonString(meta.Name)
 
 	return func(tx *ent.Tx) error {
 		if err := tx.Hustler.Create().
@@ -289,13 +292,13 @@ func (p *HustlerProcessor) ProcessMetadataUpdate(ctx context.Context, e bindings
 
 // Nasty Hustlers put bad unicode and null chars in things.
 // We have to clean it up or it breaks our system.
-func cleanJsonString(json string) string {
+func CleanJsonString(json string) string {
 	return strings.ReplaceAll(strings.ToValidUTF8(json, ""), "\x00", "")
 }
 
 func (p *HustlerProcessor) ProcessTransferBatch(ctx context.Context, e bindings.HustlerTransferBatch) (func(tx *ent.Tx) error, error) {
 	return func(tx *ent.Tx) error {
-		if err := ensureWallet(ctx, tx, e.To); err != nil {
+		if err := ensureWalletExists(ctx, tx, e.To); err != nil {
 			return fmt.Errorf("hustler: %w", err)
 		}
 
@@ -316,14 +319,24 @@ func (p *HustlerProcessor) ProcessTransferBatch(ctx context.Context, e bindings.
 	}, nil
 }
 
-func (p *HustlerProcessor) ProcessTransferSingle(ctx context.Context, e bindings.HustlerTransferSingle) (func(tx *ent.Tx) error, error) {
-	block, err := p.Eth.BlockByNumber(ctx, new(big.Int).SetUint64(e.Raw.BlockNumber))
-	if err != nil {
-		return nil, fmt.Errorf("ProcessTransferSingle updating hustler %s metadata: %w", e.Id.String(), err)
+func (p *HustlerProcessor) ProcessTransferSingle(
+	ctx context.Context,
+	e bindings.HustlerTransferSingle,
+) (func(tx *ent.Tx) error, error) {
+
+	block, blockErr := p.Eth.BlockByNumber(
+		ctx,
+		new(big.Int).SetUint64(e.Raw.BlockNumber))
+	if blockErr != nil {
+		fmtErr := fmt.Errorf(
+			"ProcessTransferSingle updating hustler %s metadata: %w",
+			e.Id.String(),
+			blockErr)
+		return nil, fmtErr
 	}
 
 	return func(tx *ent.Tx) error {
-		if err := ensureWallet(ctx, tx, e.To); err != nil {
+		if err := ensureWalletExists(ctx, tx, e.To); err != nil {
 			return fmt.Errorf("hustler: %w", err)
 		}
 
@@ -344,7 +357,7 @@ func (p *HustlerProcessor) ProcessTransferSingle(ctx context.Context, e bindings
 				return fmt.Errorf("hustler: create hustler: %w", err)
 			}
 
-			if err := refreshEquipment(ctx, p.Eth, tx, e.Id.String(), hustlerAddr, new(big.Int).SetUint64(e.Raw.BlockNumber)); err != nil {
+			if err := RefreshEquipment(ctx, p.Eth, tx, e.Id.String(), hustlerAddr, new(big.Int).SetUint64(e.Raw.BlockNumber)); err != nil {
 				return err
 			}
 		}
@@ -376,11 +389,18 @@ func (p *HustlerProcessor) ProcessTransferSingle(ctx context.Context, e bindings
 	}, nil
 }
 
-func refreshEquipment(ctx context.Context, eth interface {
-	bind.ContractBackend
-	ethereum.ChainStateReader
-	ethereum.TransactionReader
-}, tx *ent.Tx, id string, address common.Address, blockNumber *big.Int) error {
+func RefreshEquipment(
+	ctx context.Context,
+	eth interface {
+		bind.ContractBackend
+		ethereum.ChainStateReader
+		ethereum.TransactionReader
+	},
+	tx *ent.Tx,
+	id string,
+	address common.Address,
+	blockNumber *big.Int,
+) error {
 	slots, err := equipmentSlots(ctx, eth, id, address, blockNumber)
 	if err != nil {
 		return err
@@ -406,7 +426,7 @@ func refreshEquipment(ctx context.Context, eth interface {
 		return fmt.Errorf("decoding metadata: %w", err)
 	}
 
-	safeStr := cleanJsonString(string(decoded))
+	safeStr := CleanJsonString(string(decoded))
 
 	var parsed Metadata
 	if err := json.Unmarshal([]byte(safeStr), &parsed); err != nil {
@@ -497,10 +517,16 @@ type Slots struct {
 	Accessory *big.Int
 }
 
-func equipmentSlots(ctx context.Context, eth interface {
-	ethereum.ChainStateReader
-	ethereum.TransactionReader
-}, id string, address common.Address, blockNumber *big.Int) (*Slots, error) {
+func equipmentSlots(
+	ctx context.Context,
+	eth interface {
+		ethereum.ChainStateReader
+		ethereum.TransactionReader
+	},
+	id string,
+	address common.Address,
+	blockNumber *big.Int,
+) (*Slots, error) {
 	slots := &Slots{}
 
 	metadataKey := new(big.Int).SetBytes(solsha3.SoliditySHA3(
