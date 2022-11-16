@@ -130,8 +130,11 @@ func (e *Ethereum) Sync(ctx context.Context) {
 			numUpdates := 0
 			var wg sync.WaitGroup
 			for _, contract := range e.contracts {
-				go syncContract(ctx, contract, e, &numUpdates)
 				wg.Add(1)
+				go func() {
+					defer wg.Done()
+					syncContract(ctx, contract, e, &numUpdates)
+				}()
 			}
 			wg.Wait()
 			e.Unlock()

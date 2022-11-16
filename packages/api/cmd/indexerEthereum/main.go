@@ -25,8 +25,12 @@ func main() {
 		case indexer.EthConfig:
 			log.Debug().Msgf("Starting %v", c)
 			eth := indexer.NewEthereumIndexer(ctx, dbprovider.Ent(), c)
-			go eth.Sync(log.WithContext(ctx))
+
 			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				eth.Sync(log.WithContext(ctx))
+			}()
 		}
 	}
 	wg.Wait()
