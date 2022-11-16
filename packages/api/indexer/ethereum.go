@@ -67,7 +67,6 @@ func NewEthereumIndexer(ctx context.Context, entClient *ent.Client, config EthCo
 	}
 
 	for _, c := range config.Contracts {
-		fmt.Println(c.Name)
 		c := c
 		log.Info().Msgf("Get SyncState for %v", c.Name)
 		s, err := entClient.SyncState.Get(ctx, c.Address.Hex())
@@ -80,7 +79,7 @@ func NewEthereumIndexer(ctx context.Context, entClient *ent.Client, config EthCo
 		if err := c.Processor.Setup(c.Address, eth); err != nil {
 			log.Fatal().Msg("Setting up processor.")
 		}
-
+		log.Debug().Msgf("Appending %v", c.Name)
 		e.contracts = append(e.contracts, &c)
 	}
 
@@ -131,10 +130,11 @@ func (e *Ethereum) Sync(ctx context.Context) {
 			var wg sync.WaitGroup
 			for _, contract := range e.contracts {
 				wg.Add(1)
-				go func() {
+				log.Debug().Msgf("Goroutine %v", contract.Name)
+				go func(contract *Contract) {
 					defer wg.Done()
 					syncContract(ctx, contract, e, &numUpdates)
-				}()
+				}(contract)
 			}
 			wg.Wait()
 			e.Unlock()
@@ -154,6 +154,7 @@ func (e *Ethereum) Sync(ctx context.Context) {
 
 func syncContract(ctx context.Context, c *Contract, e *Ethereum, numUpdates *int) {
 	_from := c.StartBlock
+	log.Debug().Msgf("In routine %v", c.Name)
 	for {
 		_to := Min(e.latest, _from+blockLimit)
 
@@ -178,9 +179,9 @@ func syncContract(ctx context.Context, c *Contract, e *Ethereum, numUpdates *int
 			committer, err := c.Processor.ProcessElement(c.Processor)(ctx, l)
 			if err != nil {
 				// Commented out so we don't crash the indexer on every mis-process
-				// log.Fatal().Err(err).Msgf("Processing element %s.", l.TxHash.Hex())
-				log.Err(err).Msgf(
-					"Contract %s error processing tx hash %s.", c.Address, l.TxHash.Hex())
+				log.Fatal().Err(err).Msgf("Processing element %s.", l.TxHash.Hex())
+				// log.Err(err).Msgf(
+				// 	"Contract %s error processing tx hash %s.", c.Address, l.TxHash.Hex())
 				break
 			}
 

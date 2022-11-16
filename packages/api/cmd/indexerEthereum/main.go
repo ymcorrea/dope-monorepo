@@ -20,11 +20,15 @@ func main() {
 	log := zerolog.New(os.Stderr)
 	ctx := context.Background()
 	var wg sync.WaitGroup
-	for _, c := range indexer.Config[envcfg.Network] {
-		switch c := c.(type) {
+	for _, conf := range indexer.Config[envcfg.Network] {
+		switch conf := conf.(type) {
 		case indexer.EthConfig:
-			log.Debug().Msgf("Starting %v", c)
-			eth := indexer.NewEthereumIndexer(ctx, dbprovider.Ent(), c)
+			log.Debug().Msgf("Starting %v", conf)
+
+			eth := indexer.NewEthereumIndexer(
+				log.WithContext(ctx),
+				dbprovider.Ent(),
+				conf)
 
 			wg.Add(1)
 			go func() {
