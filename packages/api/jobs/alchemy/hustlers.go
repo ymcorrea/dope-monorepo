@@ -38,11 +38,12 @@ func SyncHustlers(ctx context.Context) error {
 		for j := 0; j < len(tokens); j++ {
 			currToken := tokens[j]
 			UpsertHustlerFromAlchemy(ctx, currToken)
-			// 🚨 TODO: PROCESS AND STORE INFO AS IN HUSTLER INDEXER TO DB
-			//          indexer/processor/hustler.go
-			// meta := processMetadata(token)
-			// bodyParts := processBodyParts(token)
-			// viewbox := processViewBox(token)
+			// 🚨 TODO 🚨
+			//
+			// PROCESS AND STORE INFO LIKE THE HUSTLER INDEXER
+			//   indexer/processor/hustler.go
+			// Ideally this should call similar code that runs for
+			//   ProcessMetadataUpdate,  ProcessTransferSingle
 		}
 	}
 	return nil
