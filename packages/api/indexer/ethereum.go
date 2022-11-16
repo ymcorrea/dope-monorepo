@@ -130,7 +130,6 @@ func (e *Ethereum) Sync(ctx context.Context) {
 			var wg sync.WaitGroup
 			for _, contract := range e.contracts {
 				wg.Add(1)
-				log.Debug().Msgf("Goroutine %v", contract.Name)
 				go func(contract *Contract) {
 					defer wg.Done()
 					syncContract(ctx, contract, e, &numUpdates)
@@ -154,7 +153,7 @@ func (e *Ethereum) Sync(ctx context.Context) {
 
 func syncContract(ctx context.Context, c *Contract, e *Ethereum, numUpdates *int) {
 	_from := c.StartBlock
-	log.Debug().Msgf("In routine %v", c.Name)
+
 	for {
 		_to := Min(e.latest, _from+blockLimit)
 
