@@ -43,7 +43,7 @@ func SeedPaperWallets() error {
 	}
 	defer client.Close()
 
-	log.Default().Println("Running query…")
+	log.Default().Println("Running query to get all PAPER owners…")
 	q := client.Query(qStr)
 	it, err := q.Read(ctx)
 	if err != nil {
@@ -61,11 +61,14 @@ func SeedPaperWallets() error {
 		}
 		walletAddress := row[0].(string)
 		log.Default().Printf("Adding %s", walletAddress)
-		db.Wallet.Create().
+		err = db.Wallet.Create().
 			SetID(walletAddress).
 			OnConflict().
-			UpdateNewValues().
+			DoNothing().
 			Exec(ctx)
+		if err != nil {
+			return fmt.Errorf("creating wallet: %w", err)
+		}
 	}
 
 	return nil
