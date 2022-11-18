@@ -100,7 +100,20 @@ func eventLogCommitter(
 ) func(tx *ent.Tx) error {
 	return func(tx *ent.Tx) error {
 		id := fmt.Sprintf("%s-%s-%d", c.Address.Hex(), l.TxHash.Hex(), l.Index)
-		if _, err := tx.Event.Get(ctx, id); err != nil {
+		// There's a unique index on the event table, so
+		// we need to check ID and the combo columns for that index.
+		if _, err := tx.Event.
+			Query().
+			Where(
+				event.Or(
+					event.ID(id),
+					event.And(
+						event.Index(uint64(l.Index)),
+						event.Hash(l.TxHash),
+					),
+				),
+			).
+			Only(ctx); err != nil {
 			if ent.IsNotFound(err) {
 				if err := tx.Event.Create().
 					SetID(id).
@@ -108,7 +121,7 @@ func eventLogCommitter(
 					SetHash(l.TxHash).
 					SetIndex(uint64(l.Index)).
 					OnConflictColumns(event.FieldID).
-					UpdateNewValues().
+					DoNothing().
 					Exec(ctx); err != nil {
 					return fmt.Errorf("%v - eventLogCommitter: creating event log %s: %w", c.Name, id, err)
 				}
