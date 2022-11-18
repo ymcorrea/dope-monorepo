@@ -10,6 +10,7 @@ import (
 	"github.com/dopedao/dope-monorepo/packages/api/indexer/processor"
 	"github.com/dopedao/dope-monorepo/packages/api/internal/dbprovider"
 	"github.com/dopedao/dope-monorepo/packages/api/internal/ent"
+	"github.com/dopedao/dope-monorepo/packages/api/internal/ent/event"
 	"github.com/dopedao/dope-monorepo/packages/api/internal/ent/syncstate"
 	"github.com/dopedao/dope-monorepo/packages/api/internal/logger"
 	"github.com/ethereum/go-ethereum"
@@ -106,6 +107,8 @@ func eventLogCommitter(
 					SetAddress(c.Address).
 					SetHash(l.TxHash).
 					SetIndex(uint64(l.Index)).
+					OnConflictColumns(event.FieldID).
+					UpdateNewValues().
 					Exec(ctx); err != nil {
 					return fmt.Errorf("%v - eventLogCommitter: creating event log %s: %w", c.Name, id, err)
 				}
