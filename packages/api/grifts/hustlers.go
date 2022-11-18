@@ -9,6 +9,7 @@ import (
 var _ = g.Namespace("hustlers", func() {
 	g.Desc("sync", "Sync all Hustler tokens into database")
 	g.Add("sync", func(c *g.Context) error {
-		return alchemy.SyncHustlers(c)
+		alchemy.SyncHustlers()
+		return nil
 	})
 })

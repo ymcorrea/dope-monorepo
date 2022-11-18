@@ -19,7 +19,8 @@ import (
 var baseUrl = "https://opt-mainnet.g.alchemy.com/nft/v2/m-suB_sgPaMFttpSJMU9QWo60c1yxnlG"
 var hustlerContractAddr = "0xDbfEaAe58B6dA8901a8a40ba0712bEB2EE18368E"
 
-func SyncHustlers(ctx context.Context) error {
+func SyncHustlers() {
+	ctx := context.Background()
 	ownersWithTokenBalances := GetHustlerOwners()
 	numOwners := len(ownersWithTokenBalances)
 	for i := 0; i < numOwners; i++ {
@@ -47,7 +48,6 @@ func SyncHustlers(ctx context.Context) error {
 			//   ProcessMetadataUpdate,  ProcessTransferSingle
 		}
 	}
-	return nil
 }
 
 func UpsertHustlerFromAlchemy(ctx context.Context, t Nft) {
