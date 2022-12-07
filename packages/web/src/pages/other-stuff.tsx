@@ -25,7 +25,7 @@ const SocialLinks = () => {
         <DesktopIcon
           icon="file"
           label="Wiki + Players Guide"
-          clickAction={() => openBrowserTab('http://wiki.dopedao.org')}
+          clickAction={() => openBrowserTab('/wiki')}
         />
         <DesktopIcon
           icon="twitter"
