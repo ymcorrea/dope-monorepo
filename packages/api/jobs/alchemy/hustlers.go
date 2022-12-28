@@ -36,7 +36,7 @@ func SyncHustlers() {
 		log.Info().
 			Msgf(
 				"Hustler Sync Completion %0.3f%%\n",
-				float64(i)/float64(numOwners))
+				(float64(i)/float64(numOwners))*100)
 
 		for j := 0; j < len(tokens); j++ {
 			currToken := tokens[j]

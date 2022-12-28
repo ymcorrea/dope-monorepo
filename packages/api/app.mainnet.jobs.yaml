@@ -9,7 +9,13 @@ env_variables:
   PG_CONNSTR: secret://projects/803405501117/secrets/pg-connstr/versions/2
   NETWORK: mainnet
 
-instance_class: B2
+# Manual scaling requires a "B" type instance
+# See instances available here: 
+# https://cloud.google.com/appengine/docs/standard#instance_classes
+#
+# B4 has more ram, which we need because the job server
+# was continually running out of memory and restarting.
+instance_class: B4
 
 manual_scaling:
   instances: 1
