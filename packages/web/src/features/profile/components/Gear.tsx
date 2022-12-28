@@ -26,7 +26,14 @@ const GearWrapper = ({ searchValue }: { searchValue: string }) => {
   const { data, hasNextPage, isFetching, fetchNextPage } = useInfiniteProfileGearQuery(
     {
       where: {
-        hasWalletWith: [{ id: account }],
+        hasWalletWith: [
+          {
+            // Hack to get around the fact that the query is case sensitive
+            // Hustler sync from Alchemy puts wallet addresses in DB lowercase,
+            // while right from the chain is mixed-case.
+            or: [{ id: account?.toLowerCase() }, { id: account }],
+          },
+        ],
         balanceGT: '0',
         hasItemWith: [
           {

@@ -43,16 +43,21 @@ const HustlerFooter = ({ id }: { id: string }) => (
 
 const Hustlers = ({ searchValue }: { searchValue?: string | null }) => {
   const { account } = useWeb3React();
-  
+
   // If we don't do this unnamed hustlers won't show up
-  if (searchValue?.trim.length === 0) { searchValue = null; }
+  if (searchValue?.trim.length === 0) {
+    searchValue = null;
+  }
 
   const { data, hasNextPage, isFetching, fetchNextPage } = useInfiniteProfileHustlersQuery(
     {
       where: {
         hasWalletWith: [
           {
-            id: account,
+            // Hack to get around the fact that the query is case sensitive
+            // Hustler sync from Alchemy puts wallet addresses in DB lowercase,
+            // while right from the chain is mixed-case.
+            or: [{ id: account?.toLowerCase() }, { id: account }],
           },
         ],
         nameContains: searchValue,

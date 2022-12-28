@@ -40,7 +40,10 @@ const Dopes = ({ searchValue }: { searchValue: string }) => {
       where: {
         hasWalletWith: [
           {
-            id: account,
+            // Hack to get around the fact that the query is case sensitive
+            // Hustler sync from Alchemy puts wallet addresses in DB lowercase,
+            // while right from the chain is mixed-case.
+            or: [{ id: account?.toLowerCase() }, { id: account }],
           },
         ],
         hasItemsWith: [
