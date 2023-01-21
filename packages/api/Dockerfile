@@ -9,7 +9,7 @@
 # EX: packages/api, packages/game-server, packages/api-indexer
 
 # FOR GAE Flexible Environment Custom Runtime 
-FROM golang:1.16
+FROM golang:1.18
 
 ENV GO111MODULE=on \
     CGO_ENABLED=0 \
@@ -28,7 +28,7 @@ COPY . .
 RUN go mod download
 
 # Build the GAME application
-RUN go build ./cmd/game/main.go
+RUN go build ./cmd/gameServer/main.go
 
 # Default port GCP wants
 EXPOSE 8080
