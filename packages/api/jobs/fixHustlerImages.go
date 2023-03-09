@@ -77,7 +77,7 @@ func FixHustlerImages() {
 
 		log.Debug().
 			Str("Job", "FixHustlerImages").
-			Msgf("Updating %v image for", h.ID)
+			Msgf("Persisting %v svg to database", h.ID)
 		dbClient.Hustler.UpdateOneID(h.ID).SetSvg(hustlerSvg).Exec(ctx)
 	}
 }
