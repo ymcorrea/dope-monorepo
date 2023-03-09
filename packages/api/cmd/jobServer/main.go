@@ -69,7 +69,7 @@ func newServer(ctx context.Context) (http.Handler, error) {
 	handleJob(r, "/sync-hustlers", alchemy.SyncHustlers, qSyncHustlers)
 
 	qFixHustlerImages := make(chan int, JOB_LIMIT)
-	handleJob(r, "/fix-hustler-images", alchemy.SyncHustlers, qFixHustlerImages)
+	handleJob(r, "/fix-hustler-images", jobs.FixHustlerImages, qFixHustlerImages)
 
 	return cors.AllowAll().Handler(r), nil
 }
