@@ -34,25 +34,33 @@ func FixHustlerImages() {
 		Where(hustler.SvgEQ("")).
 		All(ctx)
 	if err != nil {
-		log.Error().Msgf("Error getting Hustlers with no images %v", err)
+		log.Error().
+			Str("Job", "FixHustlerImages").
+			Msgf("Error getting Hustlers with no images %v", err)
 		return
 	}
-	log.Debug().Msgf("%v Hustlers with no image in database", len(blankHustlers))
+	log.Debug().Msgf("FixHustlerImages - %v Hustlers with no image in database", len(blankHustlers))
 
 	for i := 0; i < len(blankHustlers); i++ {
 		h := blankHustlers[i]
 		bigId, ok := new(big.Int).SetString(h.ID, 10)
 		if !ok {
-			log.Warn().Msgf("Error converting id to int %v", err)
+			log.Warn().
+				Str("Job", "FixHustlerImages").
+				Msgf("Error converting id to int %v", err)
 			continue
 		}
 
 		offchainHustlerSvg, err := svgR.GetOffchainRender(bigId)
 		if err != nil {
-			log.Warn().Msgf("Error getting offchain render for %v", h.ID)
+			log.Warn().
+				Str("Job", "FixHustlerImages").
+				Msgf("Error getting offchain render for %v", h.ID)
 		}
 
-		log.Debug().Msgf("Updating %v with offchain image", h.ID)
+		log.Debug().
+			Str("Job", "FixHustlerImages").
+			Msgf("Updating %v with offchain image", h.ID)
 		dbClient.Hustler.UpdateOneID(h.ID).SetSvg(offchainHustlerSvg).Exec(ctx)
 	}
 }
