@@ -387,9 +387,22 @@ func handlePlayerPickupItemEntity(p *Player, msg json.RawMessage, ctx context.Co
 		return
 	}
 
-	if !RemoveItemEntity(&p.GameItems, itemEntity, p.Broadcast) {
+	removed := RemoveItemEntity(&p.GameItems, itemEntity)
+	if !removed {
 		p.Send <- messages.GenerateErrorMessage(500, "could not pickup item entity")
 		return
+	}
+
+	itemData, err := json.Marshal(item.IdData{Id: itemEntity.Id.String()})
+	if err != nil {
+		p.Send <- messages.GenerateErrorMessage(500, "could not pickup item entity")
+	}
+
+	p.Broadcast <- messages.BroadcastMessage{
+		Message: messages.BaseMessage{
+			Event: events.PLAYER_PICKUP_ITEMENTITY,
+			Data:  itemData,
+		},
 	}
 
 	if p.AddItem(ctx, client, itemEntity.Item, true) != nil {
@@ -444,27 +457,13 @@ func handlePlayerUpdateCitizenState(p *Player, msg json.RawMessage, ctx context.
 	log.Info().Msgf("player %s | %s updated citizen state: %s", p.Id, p.Name, data.Citizen)
 }
 
-// should really be in the items package but no idea how to break up item <> player-channel
-func RemoveItemEntity(itemEntities *[]*item.ItemEntity, itemEntity *item.ItemEntity, broadcastChan chan messages.BroadcastMessage) bool {
+func RemoveItemEntity(itemEntities *[]*item.ItemEntity, itemEntity *item.ItemEntity) bool {
 	removed := false
 
 	for i := 0; i < len(*itemEntities); i++ {
 		if *(*itemEntities)[i] == *itemEntity {
 			*itemEntities = append((*itemEntities)[:i], (*itemEntities)[i+1:]...)
 			removed = true
-
-			data, err := json.Marshal(item.IdData{Id: itemEntity.Id.String()})
-			if err != nil {
-				// TODO: print error message
-				break
-			}
-
-			broadcastChan <- messages.BroadcastMessage{
-				Message: messages.BaseMessage{
-					Event: events.PLAYER_PICKUP_ITEMENTITY,
-					Data:  data,
-				},
-			}
 
 			break
 		}
