@@ -27,7 +27,7 @@ var (
 func handlePlayerCommand(p *Player, msg json.RawMessage, log *zerolog.Logger) {
 	var command ChatCommandData
 	if err := json.Unmarshal(msg, &command); err != nil {
-		messages.GenerateErrorMessage(500, "could not marshal command data")
+		p.Send <- messages.GenerateErrorMessage(500, "could not marshal command data")
 		return
 	}
 
