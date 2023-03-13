@@ -1,9 +1,13 @@
 package game
 
 import (
+	"context"
+	"encoding/json"
 	"testing"
 
 	"github.com/dopedao/dope-monorepo/packages/api/game/dopemap"
+	"github.com/dopedao/dope-monorepo/packages/api/game/events"
+	"github.com/dopedao/dope-monorepo/packages/api/game/messages"
 	"github.com/dopedao/dope-monorepo/packages/api/game/player"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -121,4 +125,39 @@ func TestPlayerByUUID_NotFound(t *testing.T) {
 	out := g.PlayerByUUID(uuid.New())
 
 	assert.Nil(out)
+}
+
+func TestDispatchPlayerJoin(t *testing.T) {
+	assert := assert.New(t)
+
+	gChan := make(chan messages.BroadcastMessage, 1)
+
+	p1 := player.Player{
+		Id: uuid.New(),
+	}
+
+	p2 := player.Player{
+		Id: uuid.New(),
+	}
+
+	players := make([]*player.Player, 2)
+	players[0] = &p1
+	players[1] = &p2
+
+	g := Game{
+		Players:   players,
+		Broadcast: gChan,
+	}
+
+	g.DispatchPlayerJoin(context.TODO(), &p2)
+
+	out1 := <-gChan
+	var joinData player.PlayerData
+	json.Unmarshal(out1.Message.Data, &joinData)
+
+	assert.Equal(events.PLAYER_JOIN, out1.Message.Event)
+	assert.Equal(p2.Id.String(), joinData.Id)
+
+	// dont send msg to p2
+	assert.True(!out1.Condition(&p2))
 }
