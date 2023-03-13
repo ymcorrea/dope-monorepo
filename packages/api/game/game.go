@@ -297,21 +297,12 @@ func (g *Game) PlayerByConn(conn *websocket.Conn) *p.Player {
 	return nil
 }
 
-func (g *Game) tick(ctx context.Context, time time.Time) {
-	_, log := logger.LogFor(ctx)
-
-	// TODO: better way of doing this?
-	if g.Time >= MINUTES_DAY {
-		g.Time = 0
-	}
-	g.Time = (g.Time + 0.5)
-
-	// update fake players positions
+func UpdateBotPosition(players *[]*p.Player) {
 	boundaries := dopemap.Position{
 		X: 2900,
 		Y: 1500,
 	}
-	for _, player := range g.Players {
+	for _, player := range *players {
 		if player.Conn != nil {
 			continue
 		}
@@ -338,6 +329,19 @@ func (g *Game) tick(ctx context.Context, time time.Time) {
 			player.Position.Y = player.LastPosition.Y
 		}
 	}
+}
+
+func (g *Game) tick(ctx context.Context, time time.Time) {
+	_, log := logger.LogFor(ctx)
+
+	// TODO: better way of doing this?
+	if g.Time >= MINUTES_DAY {
+		g.Time = 0
+	}
+	g.Time = (g.Time + 0.5)
+
+	// update fake players positions
+	UpdateBotPosition(&g.Players)
 
 	// for each player, send a tick message
 	for _, player := range g.Players {
