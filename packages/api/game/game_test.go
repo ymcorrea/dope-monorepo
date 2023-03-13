@@ -41,7 +41,7 @@ func TestUpdateBotPosition(t *testing.T) {
 	assert := assert.New(t)
 
 	var x float32 = 10
-	var y float32 = 10
+	var y float32 = 20
 
 	bot := player.Player{
 		Conn: nil,
@@ -56,6 +56,69 @@ func TestUpdateBotPosition(t *testing.T) {
 
 	UpdateBotPosition(&players)
 
-	assert.NotEqual(x, bot.Position.X)
-	assert.NotEqual(y, bot.Position.Y)
+	assert.Equal(x, bot.LastPosition.X)
+	assert.Equal(y, bot.LastPosition.Y)
+}
+
+func TestPlayerByHustlerID(t *testing.T) {
+	assert := assert.New(t)
+
+	players := make([]*player.Player, 2)
+	players[0] = &player.Player{HustlerId: uuid.NewString()}
+	players[1] = &player.Player{HustlerId: uuid.NewString()}
+
+	g := Game{
+		Players: players,
+	}
+
+	out := g.PlayerByHustlerID(players[1].HustlerId)
+
+	assert.Equal(out, players[1])
+}
+
+func TestPlayerByHustlerID_NotFound(t *testing.T) {
+	assert := assert.New(t)
+
+	players := make([]*player.Player, 1)
+	players[0] = &player.Player{HustlerId: uuid.NewString()}
+
+	g := Game{
+		Players: players,
+	}
+
+	out := g.PlayerByHustlerID(uuid.NewString())
+
+	assert.Nil(out)
+}
+
+func TestPlayerByUUID(t *testing.T) {
+	assert := assert.New(t)
+
+	players := make([]*player.Player, 2)
+	players[0] = &player.Player{Id: uuid.New()}
+	players[1] = &player.Player{Id: uuid.New()}
+
+	g := Game{
+		Players: players,
+	}
+
+	out := g.PlayerByUUID(players[1].Id)
+
+	assert.Equal(out, players[1])
+}
+
+func TestPlayerByUUID_NotFound(t *testing.T) {
+	assert := assert.New(t)
+
+	players := make([]*player.Player, 2)
+	players[0] = &player.Player{Id: uuid.New()}
+	players[1] = &player.Player{Id: uuid.New()}
+
+	g := Game{
+		Players: players,
+	}
+
+	out := g.PlayerByUUID(uuid.New())
+
+	assert.Nil(out)
 }
