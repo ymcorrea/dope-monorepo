@@ -7,6 +7,7 @@ import (
 
 	"github.com/dopedao/dope-monorepo/packages/api/game/dopemap"
 	"github.com/dopedao/dope-monorepo/packages/api/game/events"
+	"github.com/dopedao/dope-monorepo/packages/api/game/item"
 	"github.com/dopedao/dope-monorepo/packages/api/game/messages"
 	"github.com/dopedao/dope-monorepo/packages/api/game/player"
 	"github.com/google/uuid"
@@ -160,4 +161,34 @@ func TestDispatchPlayerJoin(t *testing.T) {
 
 	// dont send msg to p2
 	assert.True(!out1.Condition(&p2))
+}
+
+func TestDispatchPlayerLeave(t *testing.T) {
+	assert := assert.New(t)
+
+	g := Game{
+		Broadcast: make(chan messages.BroadcastMessage, 1),
+	}
+
+	p1 := player.Player{
+		Conn:      &websocket.Conn{},
+		HustlerId: uuid.NewString(),
+		Id:        uuid.New(),
+		Broadcast: g.Broadcast,
+		Send:      make(chan messages.BaseMessage, 1),
+	}
+
+	players := make([]*player.Player, 1)
+	players[0] = &p1
+
+	g.Players = players
+
+	g.DispatchPlayerLeave(context.TODO(), players[0])
+
+	gOut := <-g.Broadcast
+	var p1LeaveData item.IdData
+	json.Unmarshal(gOut.Message.Data, &p1LeaveData)
+
+	assert.Equal(events.PLAYER_LEAVE, gOut.Message.Event)
+	assert.Equal(p1.Id.String(), p1LeaveData.Id)
 }
