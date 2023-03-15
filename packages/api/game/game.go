@@ -25,6 +25,8 @@ import (
 	"github.com/dopedao/dope-monorepo/packages/api/internal/middleware"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -176,6 +178,85 @@ func (g *Game) HandleGameMessages(ctx context.Context, client *ent.Client, conn 
 	}
 }
 
+func (g *Game) registerPlayer(player *p.Player, ctx context.Context, client *ent.Client) {
+	g.Players = append(g.Players, player)
+
+	go player.ReadPump(ctx, client)
+	go player.WritePump(ctx)
+
+	// handshake data, player ID & game state info
+	handShakeData, err := json.Marshal(g.GenerateHandshakeData(ctx, client, player))
+	if err != nil {
+		player.Send <- messages.GenerateErrorMessage(500, "could not marshal handshake data")
+		return
+	}
+
+	player.Send <- messages.BaseMessage{
+		Event: events.PLAYER_HANDSHAKE,
+		Data:  handShakeData,
+	}
+
+	log.Info().Msgf("player joined: %s | %s", player.Id, player.Name)
+}
+
+func (g *Game) unregisterPlayer(player *p.Player, ctx context.Context, client *ent.Client, log *zerolog.Logger) {
+	// save last position if player has a hustler
+	if player.HustlerId != "" {
+		gameHustler, err := client.GameHustler.Get(ctx, player.HustlerId)
+		if err != nil {
+			log.Err(err).Msgf("could not get game hustler: %s", player.HustlerId)
+			return
+		}
+
+		// update last position
+		if err := gameHustler.Update().SetLastPosition(schema.Position{
+			CurrentMap: player.CurrentMap,
+			X:          player.Position.X,
+			Y:          player.Position.Y,
+		}).Exec(ctx); err != nil {
+			log.Err(err).Msgf("saving game hustler: %s", player.HustlerId)
+			return
+		}
+	}
+
+	for i, p := range g.Players {
+		if p == player {
+			g.Players = append(g.Players[:i], g.Players[i+1:]...)
+			break
+		}
+	}
+
+	log.Info().Msgf("player left: %s | %s", player.Id, player.Name)
+}
+
+func (g *Game) broadcast(br messages.BroadcastMessage) {
+	for _, player := range g.Players {
+		if (br.Condition != nil && !br.Condition(player)) || player.Conn == nil {
+			continue
+		}
+
+		select {
+		case player.Send <- br.Message:
+		default:
+			log.Info().Msgf("could not send message to player: %s | %s", player.Id, player.Name)
+
+			data, _ := json.Marshal(gameItem.IdData{
+				Id: player.Id.String(),
+			})
+
+			g.Unregister <- player
+			g.Broadcast <- messages.BroadcastMessage{
+				Message: messages.BaseMessage{
+					Event: events.PLAYER_LEAVE,
+					Data:  data,
+				},
+			}
+
+			close(player.Send)
+		}
+	}
+}
+
 func (g *Game) Start(ctx context.Context, client *ent.Client) {
 	_, log := logger.LogFor(ctx)
 
@@ -186,78 +267,11 @@ func (g *Game) Start(ctx context.Context, client *ent.Client) {
 		case t := <-g.Ticker.C:
 			g.tick(ctx, t)
 		case player := <-g.Register:
-			g.Players = append(g.Players, player)
-
-			go player.ReadPump(ctx, client)
-			go player.WritePump(ctx)
-
-			// handshake data, player ID & game state info
-			handShakeData, err := json.Marshal(g.GenerateHandshakeData(ctx, client, player))
-			if err != nil {
-				player.Send <- messages.GenerateErrorMessage(500, "could not marshal handshake data")
-				return
-			}
-
-			player.Send <- messages.BaseMessage{
-				Event: events.PLAYER_HANDSHAKE,
-				Data:  handShakeData,
-			}
-
-			log.Info().Msgf("player joined: %s | %s", player.Id, player.Name)
+			g.registerPlayer(player, ctx, client)
 		case player := <-g.Unregister:
-			// save last position if player has a hustler
-			if player.HustlerId != "" {
-				gameHustler, err := client.GameHustler.Get(ctx, player.HustlerId)
-				if err != nil {
-					log.Err(err).Msgf("could not get game hustler: %s", player.HustlerId)
-					return
-				}
-
-				// update last position
-				if err := gameHustler.Update().SetLastPosition(schema.Position{
-					CurrentMap: player.CurrentMap,
-					X:          player.Position.X,
-					Y:          player.Position.Y,
-				}).Exec(ctx); err != nil {
-					log.Err(err).Msgf("saving game hustler: %s", player.HustlerId)
-					return
-				}
-			}
-
-			for i, p := range g.Players {
-				if p == player {
-					g.Players = append(g.Players[:i], g.Players[i+1:]...)
-					break
-				}
-			}
-
-			log.Info().Msgf("player left: %s | %s", player.Id, player.Name)
+			g.unregisterPlayer(player, ctx, client, &log)
 		case br := <-g.Broadcast:
-			for _, player := range g.Players {
-				if (br.Condition != nil && !br.Condition(player)) || player.Conn == nil {
-					continue
-				}
-
-				select {
-				case player.Send <- br.Message:
-				default:
-					log.Info().Msgf("could not send message to player: %s | %s", player.Id, player.Name)
-
-					data, _ := json.Marshal(gameItem.IdData{
-						Id: player.Id.String(),
-					})
-
-					g.Unregister <- player
-					g.Broadcast <- messages.BroadcastMessage{
-						Message: messages.BaseMessage{
-							Event: events.PLAYER_LEAVE,
-							Data:  data,
-						},
-					}
-
-					close(player.Send)
-				}
-			}
+			g.broadcast(br)
 		}
 	}
 }
@@ -448,12 +462,6 @@ func (g *Game) DispatchPlayerJoin(ctx context.Context, player *p.Player) {
 
 func (g *Game) HandlePlayerJoin(ctx context.Context, conn *websocket.Conn, client *ent.Client, gameHustler *ent.GameHustler) {
 	_, log := logger.LogFor(ctx)
-	// if data.CurrentMap == "" {
-	// 	// we can directly use writejson here
-	// 	// because player is not yet registered
-	// 	conn.WriteJSON(generateErrorMessage(422, "current_map is not set"))
-	// 	return
-	// }
 
 	var player *p.Player = nil
 	if gameHustler != nil {
