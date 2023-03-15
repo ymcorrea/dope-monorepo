@@ -198,23 +198,39 @@ func TestGenerateItemEntitiesData(t *testing.T) {
 
 	item1 := item.ItemEntity{
 		Id: uuid.New(),
-		Item: item.Item{
-			Item: "Powder",
-		},
-		Position: dopemap.Position{
-			X: 10,
-			Y: 15,
-		},
+	}
+
+	item2 := item.ItemEntity{
+		Id: uuid.New(),
 	}
 
 	g := Game{
-		ItemEntities: []*item.ItemEntity{&item1},
+		ItemEntities: []*item.ItemEntity{&item1, &item2},
 	}
 
 	itemEntData := g.GenerateItemEntitiesData()
 
 	assert.Equal(item1.Id.String(), itemEntData[0].Id)
-	assert.Equal(item1.Item.Item, itemEntData[0].Item)
-	assert.Equal(item1.Position.X, itemEntData[0].X)
-	assert.Equal(item1.Position.Y, itemEntData[0].Y)
+	assert.Equal(item2.Id.String(), itemEntData[1].Id)
+}
+
+func TestGeneratePlayersData(t *testing.T) {
+	assert := assert.New(t)
+
+	p1 := player.Player{
+		Id: uuid.New(),
+	}
+
+	p2 := player.Player{
+		Id: uuid.New(),
+	}
+
+	g := Game{
+		Players: []*player.Player{&p1, &p2},
+	}
+
+	playerData := g.GeneratePlayersData()
+
+	assert.Equal(p1.Id.String(), playerData[0].Id)
+	assert.Equal(p2.Id.String(), playerData[1].Id)
 }
