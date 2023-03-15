@@ -192,3 +192,29 @@ func TestDispatchPlayerLeave(t *testing.T) {
 	assert.Equal(events.PLAYER_LEAVE, gOut.Message.Event)
 	assert.Equal(p1.Id.String(), p1LeaveData.Id)
 }
+
+func TestGenerateItemEntitiesData(t *testing.T) {
+	assert := assert.New(t)
+
+	item1 := item.ItemEntity{
+		Id: uuid.New(),
+		Item: item.Item{
+			Item: "Powder",
+		},
+		Position: dopemap.Position{
+			X: 10,
+			Y: 15,
+		},
+	}
+
+	g := Game{
+		ItemEntities: []*item.ItemEntity{&item1},
+	}
+
+	itemEntData := g.GenerateItemEntitiesData()
+
+	assert.Equal(item1.Id.String(), itemEntData[0].Id)
+	assert.Equal(item1.Item.Item, itemEntData[0].Item)
+	assert.Equal(item1.Position.X, itemEntData[0].X)
+	assert.Equal(item1.Position.Y, itemEntData[0].Y)
+}
