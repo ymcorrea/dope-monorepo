@@ -53,7 +53,7 @@ func newServer(ctx context.Context) (http.Handler, error) {
 	handleJob(r, "/gear-claims", jobs.GearClaims, qGearClaims)
 
 	qGearMetrics := make(chan int, JOB_LIMIT)
-	handleJob(r, "/gear-metrics", jobs.GearClaims, qGearMetrics)
+	handleJob(r, "/gear-metrics", jobs.GearMetrics, qGearMetrics)
 
 	qSea := make(chan int, JOB_LIMIT)
 	handleJob(r, "/opensea-listings", jobs.OpenSeaListings, qSea)

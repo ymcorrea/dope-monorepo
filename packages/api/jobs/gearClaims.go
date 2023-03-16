@@ -5,6 +5,7 @@ package jobs
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"math/big"
 	"sync"
@@ -55,6 +56,7 @@ func GearClaims() {
 			if err != nil {
 				log.Fatalf("Getting initiator balance: %+v.", err)
 			}
+			fmt.Printf("Dope %s is opened: %t", dope.ID, opened)
 			client.Dope.UpdateOneID(dope.ID).SetOpened(opened).ExecX(ctx)
 
 			<-sem
