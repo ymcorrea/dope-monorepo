@@ -18,6 +18,8 @@ func (Amount) Fields() []ent.Field {
 		field.String("id"),
 		field.Enum("type").
 			Values("DOPE", "ETH", "EQUIPMENT", "HUSTLER", "PAPER", "TURF").
+			// If we don't specify the annotation it will name this AmountAmountType
+			Annotations(entgql.Type("AmountType")).
 			Immutable(),
 		field.Int("amount").
 			GoType(BigInt{}).

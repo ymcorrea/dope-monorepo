@@ -20,6 +20,7 @@ func (Hustler) Fields() []ent.Field {
 		field.String("id"),
 		field.Enum("type").
 			Values("ORIGINAL_GANGSTA", "REGULAR").
+			Annotations(entgql.Type("HustlerType")).
 			Immutable(),
 		field.String("name").
 			Optional(),
@@ -35,6 +36,7 @@ func (Hustler) Fields() []ent.Field {
 			),
 		field.Enum("sex").
 			Values("MALE", "FEMALE").
+			Annotations(entgql.Type("HustlerSex")).
 			Default("MALE"),
 		field.Ints("viewbox").
 			Default([]int{0, 0, 0, 0}),

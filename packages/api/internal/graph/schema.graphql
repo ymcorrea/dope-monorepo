@@ -169,7 +169,7 @@ type Hustler implements Node {
 
 type Listing implements Node {
   id: ID!
-  source: Source
+  source: ListingSource
   active: Boolean!
   inputs: [Amount]!
   outputs: [Amount]!
@@ -177,7 +177,7 @@ type Listing implements Node {
   seaportOrder: SeaportOrder
 }
 
-enum Source {
+enum ListingSource {
   OPENSEA
   SWAPMEET
 }

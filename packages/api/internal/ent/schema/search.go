@@ -20,6 +20,7 @@ func (Search) Fields() []ent.Field {
 		field.String("id"),
 		field.Enum("type").
 			Values("DOPE", "ITEM", "HUSTLER").
+			Annotations(entgql.Type("SearchType")).
 			Immutable(),
 		field.Int("greatness").
 			Optional().

@@ -21,6 +21,7 @@ func (Listing) Fields() []ent.Field {
 		field.Bool("active"),
 		field.Enum("source").
 			Values("OPENSEA", "SWAPMEET").
+			Annotations(entgql.Type("ListingSource")).
 			Immutable(),
 		// Because we're stuck on Go 1.16 (using GCP App Engine Std)
 		// we can't use generics to unmarshal polymorphic json stored in a single column.

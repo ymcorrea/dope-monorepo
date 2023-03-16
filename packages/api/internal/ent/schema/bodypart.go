@@ -18,9 +18,11 @@ func (BodyPart) Fields() []ent.Field {
 		field.String("id"),
 		field.Enum("type").
 			Values("BODY", "HAIR", "BEARD").
+			Annotations(entgql.Type("BodyPartType")).
 			Immutable(),
 		field.Enum("sex").
 			Values("MALE", "FEMALE").
+			Annotations(entgql.Type("BodyPartSex")).
 			Immutable(),
 		field.String("rle").
 			Immutable(),

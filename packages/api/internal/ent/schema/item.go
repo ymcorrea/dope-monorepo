@@ -28,6 +28,7 @@ func (Item) Fields() []ent.Field {
 		field.String("id"),
 		field.Enum("type").
 			Values("WEAPON", "CLOTHES", "VEHICLE", "WAIST", "FOOT", "HAND", "DRUGS", "NECK", "RING", "ACCESSORY").
+			Annotations(entgql.Type("ItemType")).
 			Immutable(),
 		field.String("name_prefix").
 			Optional().
@@ -47,6 +48,7 @@ func (Item) Fields() []ent.Field {
 			Optional(),
 		field.Enum("tier").
 			Values("COMMON", "RARE", "CUSTOM", "BLACK_MARKET").
+			Annotations(entgql.Type("ItemTier")).
 			Optional(),
 		field.Int("greatness").
 			Optional().
