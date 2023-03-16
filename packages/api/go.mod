@@ -6,8 +6,8 @@ require (
 	cloud.google.com/go/secretmanager v1.10.0
 	cloud.google.com/go/storage v1.29.0
 	entgo.io/contrib v0.3.4
-	entgo.io/ent v0.11.6
-	github.com/99designs/gqlgen v0.17.24
+	entgo.io/ent v0.11.10
+	github.com/99designs/gqlgen v0.17.26
 	github.com/ethereum/go-ethereum v1.10.26
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
@@ -31,7 +31,7 @@ require (
 )
 
 require (
-	ariga.io/atlas v0.9.1-0.20230119123307-a3ab6808892b // indirect
+	ariga.io/atlas v0.9.2-0.20230303073438-03a4779a6338 // indirect
 	cloud.google.com/go v0.109.0 // indirect
 	cloud.google.com/go/compute v1.15.1 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
@@ -61,7 +61,7 @@ require (
 	github.com/gorilla/securecookie v1.1.1 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
-	github.com/hashicorp/golang-lru v0.5.5-0.20210104140557-80c98217689d // indirect
+	github.com/hashicorp/golang-lru/v2 v2.0.1 // indirect
 	github.com/hashicorp/hcl/v2 v2.15.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.17 // indirect
@@ -73,21 +73,21 @@ require (
 	github.com/shirou/gopsutil v3.21.11+incompatible // indirect
 	github.com/tklauser/go-sysconf v0.3.11 // indirect
 	github.com/tklauser/numcpus v0.6.0 // indirect
-	github.com/urfave/cli/v2 v2.24.1 // indirect
+	github.com/urfave/cli/v2 v2.24.4 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	github.com/zclconf/go-cty v1.12.1 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	golang.org/x/crypto v0.5.0 // indirect
-	golang.org/x/mod v0.7.0 // indirect
-	golang.org/x/net v0.5.0 // indirect
+	golang.org/x/mod v0.8.0 // indirect
+	golang.org/x/net v0.6.0 // indirect
 	golang.org/x/oauth2 v0.4.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.4.0 // indirect
-	golang.org/x/text v0.6.0 // indirect
+	golang.org/x/sys v0.5.0 // indirect
+	golang.org/x/text v0.7.0 // indirect
 	golang.org/x/time v0.1.0 // indirect
-	golang.org/x/tools v0.5.0 // indirect
+	golang.org/x/tools v0.6.1-0.20230222164832-25d2519c8696 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/grpc v1.52.0 // indirect
