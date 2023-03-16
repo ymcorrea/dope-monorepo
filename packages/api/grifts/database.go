@@ -11,6 +11,7 @@ import (
 var _ = g.Namespace("db", func() {
 	g.Desc("bootstrap", "Boostraps the database using ENT models")
 	g.Add("bootstrap", func(c *g.Context) error {
+		fmt.Println("BOOTSTRAPPING DATABASE")
 		b.Bootstrap()
 		g.Run("paper:seed_wallets", c)
 		g.Run("gear:set_metrics", c)
@@ -27,7 +28,6 @@ var _ = g.Namespace("db", func() {
 		}
 		dbprovider.RunMigration(c)
 		dbprovider.RefreshMaterializedViews(c)
-		fmt.Println("BOOTSTRAPPING DATABASE")
 		g.Run("db:bootstrap", c)
 		return nil
 	})
