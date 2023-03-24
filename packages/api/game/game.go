@@ -345,17 +345,45 @@ func UpdateBotPosition(players *[]*p.Player) {
 	}
 }
 
+func nextTime(old float32) float32 {
+	if old >= MINUTES_DAY {
+		return 0
+	}
+
+	return old + 0.5
+}
+
+func (g *Game) getNearPlayersMoveData(player *p.Player) *[]p.PlayerMoveData {
+	players := []p.PlayerMoveData{}
+
+	for _, otherPlayer := range g.Players {
+		if otherPlayer == player || otherPlayer.CurrentMap != player.CurrentMap ||
+			(otherPlayer.Position.X == otherPlayer.LastPosition.X &&
+				otherPlayer.Position.Y == otherPlayer.LastPosition.Y) {
+			continue
+		}
+
+		players = append(players, p.PlayerMoveData{
+			Id:        otherPlayer.Id.String(),
+			X:         otherPlayer.Position.X,
+			Y:         otherPlayer.Position.Y,
+			Direction: otherPlayer.Direction,
+		})
+	}
+
+	return &players
+}
+
 func (g *Game) tick(ctx context.Context, time time.Time) {
 	_, log := logger.LogFor(ctx)
 
 	// TODO: better way of doing this?
-	if g.Time >= MINUTES_DAY {
-		g.Time = 0
-	}
-	g.Time = (g.Time + 0.5)
+	g.Time = nextTime(g.Time)
 
 	// update fake players positions
-	UpdateBotPosition(&g.Players)
+	if BOT_COUNT > 0 {
+		UpdateBotPosition(&g.Players)
+	}
 
 	// for each player, send a tick message
 	for _, player := range g.Players {
@@ -363,28 +391,12 @@ func (g *Game) tick(ctx context.Context, time time.Time) {
 			continue
 		}
 
-		players := []p.PlayerMoveData{}
-
-		for _, otherPlayer := range g.Players {
-			// var squaredDist = math.Pow(float64(otherPlayer.x-player.x), 2) + math.Pow(float64(otherPlayer.y-player.y), 2)
-			if otherPlayer == player || otherPlayer.CurrentMap != player.CurrentMap ||
-				(otherPlayer.Position.X == otherPlayer.LastPosition.X &&
-					otherPlayer.Position.Y == otherPlayer.LastPosition.Y) {
-				continue
-			}
-
-			players = append(players, p.PlayerMoveData{
-				Id:        otherPlayer.Id.String(),
-				X:         otherPlayer.Position.X,
-				Y:         otherPlayer.Position.Y,
-				Direction: otherPlayer.Direction,
-			})
-		}
+		nearPlayers := g.getNearPlayersMoveData(player)
 
 		data, err := json.Marshal(TickData{
 			Time:    g.Time,
 			Tick:    utils.NowInUnixMillis(),
-			Players: players,
+			Players: *nearPlayers,
 		})
 		if err != nil {
 			player.Send <- messages.GenerateErrorMessage(500, "could not marshal player move data")
