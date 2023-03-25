@@ -252,14 +252,14 @@ func Token(ctx context.Context) (string, error) {
 
 	token := session.Values["token"]
 
+	if token == nil {
+		return "", errors.New("unauthorized")
+	}
+
 	truncatedIDToken := truncate.Truncate(token.(string), 10, "...", truncate.PositionEnd)
 	log.Debug().
 		Str("Session Token", truncatedIDToken).
 		Msg("middleware.Token")
-
-	if token == nil {
-		return "", errors.New("unauthorized")
-	}
 
 	return token.(string), nil
 }
