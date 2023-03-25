@@ -334,7 +334,7 @@ export class LdtkReader {
     const { tileWidth, tileHeight, width, height } = layer.layer;
   
     if (typeof Worker !== 'undefined') {
-      const worker = new Worker('lightProcessorWorker.js');
+      const worker = new Worker('LightProcessorWorker.js');
       worker.postMessage({
         tileset: tileset.customData.map(t => ({ tileId: t.tileId, data: t.data })),
         layerData: {
