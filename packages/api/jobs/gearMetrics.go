@@ -127,14 +127,17 @@ func GearMetrics() {
 	}
 
 	log.Info().Msg("Setting tier for items")
-	wg.Add(len(items) - 1)
-	for _, itm := range items {
 
+	// Don't want to overload database connections
+	concurrency := 50
+	sem := make(chan bool, concurrency)
+
+	for _, itm := range items {
+		sem <- true
 		log.Debug().Msgf("Setting tier for item %s", itm.ID)
 
 		go func(itm *ent.Item) {
-			r := rand.Intn(200)
-			time.Sleep(time.Duration(r) * time.Second)
+			defer func() { <-sem }()
 
 			switch g := itm.Greatness; {
 			case g > 19:
@@ -146,15 +149,13 @@ func GearMetrics() {
 			default:
 				dbClient.Item.UpdateOneID(itm.ID).SetTier(item.TierCOMMON).ExecX(ctx)
 			}
-			wg.Done()
 		}(itm)
 	}
-
-	wg.Wait()
 
 	log.Info().Msg("Setting rank and score for dopes")
 	for _, dope := range dopes {
 		score := 0
+		log.Debug().Msgf("Setting rank and score for dope %s", dope.ID)
 		for _, itm := range dope.Edges.Items {
 
 			switch itm.Tier {
