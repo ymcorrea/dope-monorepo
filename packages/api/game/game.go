@@ -29,12 +29,6 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-const (
-	TICKRATE    = time.Second / 5
-	MINUTES_DAY = 24 * 60
-	BOT_COUNT   = 0
-)
-
 type Game struct {
 	// current time
 	// we wrap around {MINUTES_DAY}
@@ -76,13 +70,39 @@ type PlayerJoinData struct {
 	HustlerId string `json:"hustlerId"`
 }
 
+const (
+	TICKRATE    = time.Second / 5
+	MINUTES_DAY = 24 * 60
+	BOT_COUNT   = 0
+	WHITELIST   = true
+)
+
+var WHITELISTED_WALLETS = [...]string{
+	"0x7C02b7eeB44E32eDa9599a85B8B373b6D1f58BD4",
+}
+
+func isWhitelisted(id string, wallet string) bool {
+	idNum, err := strconv.Atoi(id)
+	if err != nil {
+		return false
+	}
+
+	if idNum < 500 {
+		return true
+	}
+
+	for _, addr := range WHITELISTED_WALLETS {
+		if addr == wallet {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (g *Game) HandleGameMessages(ctx context.Context, client *ent.Client, conn *websocket.Conn) {
 	ctx, log := logger.LogFor(ctx)
 	log.Info().Msgf("New connection from %s", conn.RemoteAddr().String())
-
-	WHITELISTED_WALLETS := []string{
-		"0x7C02b7eeB44E32eDa9599a85B8B373b6D1f58BD4",
-	}
 
 	for {
 		// ignore if player is already registered
@@ -115,67 +135,63 @@ func (g *Game) HandleGameMessages(ctx context.Context, client *ent.Client, conn 
 				continue
 			}
 
+			// 2 players cannot have the same hustler id
+			if g.PlayerByHustlerID(data.HustlerId) != nil {
+				conn.WriteJSON(messages.GenerateErrorMessage(409, "an instance of this hustler is already in the game"))
+				continue
+			}
+
+			walletAddress, err := middleware.Wallet(ctx)
+			if err != nil {
+				conn.WriteJSON(messages.GenerateErrorMessage(http.StatusUnauthorized, "could not get wallet"))
+				continue
+			}
+
+			associatedAddress, err := client.Wallet.Query().Where(wallet.HasHustlersWith(hustler.IDEQ(data.HustlerId))).OnlyID(ctx)
+			if err != nil || associatedAddress != walletAddress {
+				conn.WriteJSON(messages.GenerateErrorMessage(http.StatusUnauthorized, "could not get hustler"))
+				continue
+			}
+
+			if WHITELIST && !isWhitelisted(data.HustlerId, walletAddress) {
+				conn.WriteJSON(messages.GenerateErrorMessage(http.StatusUnauthorized, "not whitelisted"))
+				continue
+			}
+
 			// check if authenticated wallet contains used hustler
 			// and get data from db
 			var gameHustler *ent.GameHustler = nil
 			if data.HustlerId != "" {
-				// 2 players cannot have the same hustler id
-				if g.PlayerByHustlerID(data.HustlerId) != nil {
-					conn.WriteJSON(messages.GenerateErrorMessage(409, "an instance of this hustler is already in the game"))
-					continue
-				}
-
-				walletAddress, err := middleware.Wallet(ctx)
+				gh, err := g.getOrCreateGameHustler(ctx, data.HustlerId, client)
 				if err != nil {
-					conn.WriteJSON(messages.GenerateErrorMessage(http.StatusUnauthorized, "could not get wallet"))
+					conn.WriteJSON(err)
 					continue
 				}
 
-				associatedAddress, err := client.Wallet.Query().Where(wallet.HasHustlersWith(hustler.IDEQ(data.HustlerId))).OnlyID(ctx)
-				if err != nil || associatedAddress != walletAddress {
-					conn.WriteJSON(messages.GenerateErrorMessage(http.StatusUnauthorized, "could not get hustler"))
-					continue
-				}
-
-				// check if wallet whitelisted for event
-				whitelisted := false
-
-				// whitelist if og, enable in case of events
-				// hustlerId, _ := strconv.ParseInt(data.HustlerId, 10, 32)
-				// whitelisted = hustlerId <= 500
-
-				if !whitelisted {
-					for _, addr := range WHITELISTED_WALLETS {
-						if walletAddress == addr {
-							whitelisted = true
-							break
-						}
-					}
-				}
-
-				if !whitelisted {
-					conn.WriteJSON(messages.GenerateErrorMessage(http.StatusUnauthorized, "not whitelisted"))
-					continue
-				}
-
-				// get game hustler from hustler id
-				gameHustler, err = client.GameHustler.Get(ctx, data.HustlerId)
-				if err != nil {
-					gameHustler, err = client.GameHustler.Create().
-						SetID(data.HustlerId).
-						// TODO: define spawn position constant
-						SetLastPosition(g.SpawnPosition).
-						Save(ctx)
-					if err != nil {
-						conn.WriteJSON(messages.GenerateErrorMessage(500, "could not create game hustler"))
-						continue
-					}
-				}
+				gameHustler = gh
 			}
 
 			g.HandlePlayerJoin(ctx, conn, client, gameHustler)
 		}
 	}
+}
+
+func (g *Game) getOrCreateGameHustler(ctx context.Context, huslterId string, client *ent.Client) (*ent.GameHustler, *messages.BaseMessage) {
+	// get game hustler from hustler id
+	gameHustler, err := client.GameHustler.Get(ctx, huslterId)
+	if err != nil {
+		gameHustler, err = client.GameHustler.Create().
+			SetID(huslterId).
+			// TODO: define spawn position constant
+			SetLastPosition(g.SpawnPosition).
+			Save(ctx)
+		if err != nil {
+			errMsg := messages.GenerateErrorMessage(500, "could not create game hustler")
+			return nil, &errMsg
+		}
+	}
+
+	return gameHustler, nil
 }
 
 func (g *Game) registerPlayer(player *p.Player, ctx context.Context, client *ent.Client) {
@@ -311,12 +327,13 @@ func (g *Game) PlayerByConn(conn *websocket.Conn) *p.Player {
 	return nil
 }
 
-func UpdateBotPosition(players *[]*p.Player) {
+func (g *Game) UpdateBotPosition() {
 	boundaries := dopemap.Position{
 		X: 2900,
 		Y: 1500,
 	}
-	for _, player := range *players {
+
+	for _, player := range g.Players {
 		if player.Conn != nil {
 			continue
 		}
@@ -324,16 +341,19 @@ func UpdateBotPosition(players *[]*p.Player) {
 		// <= 1/4 x and <= 2/4 y - negative
 		// <= 3/4 x and <= 4/4 y - positive
 		random := rand.Float32()
+		randomPos := rand.Float32() * 100
+
 		player.LastPosition.X = player.Position.X
 		player.LastPosition.Y = player.Position.Y
+
 		if random <= 0.25 {
-			player.Position.X = player.Position.X - (rand.Float32() * 100)
+			player.Position.X += randomPos
 		} else if random <= 0.5 {
-			player.Position.Y = player.Position.Y - (rand.Float32() * 100)
+			player.Position.Y -= randomPos
 		} else if random <= 0.75 {
-			player.Position.X = player.Position.X + (rand.Float32() * 100)
+			player.Position.X += randomPos
 		} else {
-			player.Position.Y = player.Position.Y + (rand.Float32() * 100)
+			player.Position.Y += randomPos
 		}
 
 		if player.Position.X < 0 || player.Position.X > boundaries.X {
@@ -345,12 +365,12 @@ func UpdateBotPosition(players *[]*p.Player) {
 	}
 }
 
-func nextTime(old float32) float32 {
-	if old >= MINUTES_DAY {
-		return 0
+func (g *Game) updateTime() {
+	if g.Time >= MINUTES_DAY {
+		g.Time = 0
 	}
 
-	return old + 0.5
+	g.Time = +0.5
 }
 
 func (g *Game) getNearPlayersMoveData(player *p.Player) *[]p.PlayerMoveData {
@@ -378,11 +398,11 @@ func (g *Game) tick(ctx context.Context, time time.Time) {
 	_, log := logger.LogFor(ctx)
 
 	// TODO: better way of doing this?
-	g.Time = nextTime(g.Time)
+	g.updateTime()
 
 	// update fake players positions
 	if BOT_COUNT > 0 {
-		UpdateBotPosition(&g.Players)
+		g.UpdateBotPosition()
 	}
 
 	// for each player, send a tick message
@@ -477,32 +497,10 @@ func (g *Game) HandlePlayerJoin(ctx context.Context, conn *websocket.Conn, clien
 
 	var player *p.Player = nil
 	if gameHustler != nil {
-		hustler, err := client.Hustler.Get(ctx, gameHustler.ID)
-		if err != nil {
-			log.Err(err).Msgf("could not get hustler: %s", gameHustler.ID)
-			conn.WriteJSON(messages.GenerateErrorMessage(500, "could not get hustler"))
+		player = p.NewPlayer(conn, g.Broadcast, g.Unregister, gameHustler.ID, "", gameHustler.LastPosition.CurrentMap, gameHustler.LastPosition.X, gameHustler.LastPosition.Y, g.ItemEntities)
+		if err := player.PopulateFromDB(ctx, client, gameHustler, &log); err != nil {
+			conn.WriteJSON(messages.GenerateErrorMessage(500, err.Error()))
 			return
-		}
-		// query items and quests
-		items, err := gameHustler.QueryItems().All(ctx)
-		if err != nil {
-			log.Err(err).Msgf("could not get items for hustler: %s", gameHustler.ID)
-			conn.WriteJSON(messages.GenerateErrorMessage(500, "could not get items for hustler"))
-			return
-		}
-		quests, err := gameHustler.QueryQuests().All(ctx)
-		if err != nil {
-			log.Err(err).Msgf("could not get quests for hustler: %s", gameHustler.ID)
-			conn.WriteJSON(messages.GenerateErrorMessage(500, "could not get quests for hustler"))
-			return
-		}
-
-		player = p.NewPlayer(conn, g.Broadcast, g.Unregister, gameHustler.ID, hustler.Name, gameHustler.LastPosition.CurrentMap, gameHustler.LastPosition.X, gameHustler.LastPosition.Y, g.ItemEntities)
-		for _, item := range items {
-			player.Items = append(player.Items, gameItem.Item{Item: item.Item})
-		}
-		for _, quest := range quests {
-			player.Quests = append(player.Quests, p.Quest{Quest: quest.Quest, Completed: quest.Completed})
 		}
 	} else {
 		player = p.NewPlayer(conn, g.Broadcast, g.Unregister, "", "Hustler", g.SpawnPosition.CurrentMap, g.SpawnPosition.X, g.SpawnPosition.Y, g.ItemEntities)
@@ -542,9 +540,9 @@ func (g *Game) GenerateHandshakeData(ctx context.Context, client *ent.Client, pl
 
 	relations := map[string]p.Relation{}
 	if player.HustlerId != "" {
-		gameJustlerRelations, err := client.GameHustlerRelation.Query().Where(gamehustlerrelation.HasHustlerWith(gamehustler.IDEQ(player.HustlerId))).All(ctx)
+		gameHustlerRelations, err := client.GameHustlerRelation.Query().Where(gamehustlerrelation.HasHustlerWith(gamehustler.IDEQ(player.HustlerId))).All(ctx)
 		if err == nil {
-			for _, relation := range gameJustlerRelations {
+			for _, relation := range gameHustlerRelations {
 				// TODO: log error
 				if err == nil {
 					relations[relation.Citizen] = p.Relation{
