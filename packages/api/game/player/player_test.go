@@ -11,6 +11,7 @@ import (
 	"github.com/dopedao/dope-monorepo/packages/api/game/item"
 	"github.com/dopedao/dope-monorepo/packages/api/game/messages"
 	"github.com/dopedao/dope-monorepo/packages/api/internal/ent/enttest"
+	"github.com/dopedao/dope-monorepo/packages/api/internal/ent/hustler"
 	"github.com/dopedao/dope-monorepo/packages/api/internal/ent/schema"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -699,4 +700,79 @@ func TestSerialize(t *testing.T) {
 	assert.Equal(p.CurrentMap, serialized.CurrentMap)
 	assert.Equal(p.Position.X, serialized.X)
 	assert.Equal(p.Position.Y, serialized.Y)
+}
+
+func TestPopulateFromDB(t *testing.T) {
+	assert := assert.New(t)
+	client := enttest.Open(t, "sqlite3", "file:ent?mode=memory&_fk=1")
+	defer client.Close()
+
+	p := Player{
+		Id: uuid.New(),
+		LastPosition: dopemap.Position{
+			X: 10,
+			Y: 10,
+		},
+		Items:  []item.Item{},
+		Quests: []Quest{},
+	}
+
+	hustlerName := "crunchy black"
+	_, err := client.Hustler.
+		Create().
+		SetName(hustlerName).
+		SetType(hustler.TypeREGULAR).
+		SetAge(2).
+		SetID(p.Id.String()).
+		Save(context.TODO())
+	if err != nil {
+		assert.FailNow("hustler: ", err.Error())
+	}
+
+	item := item.Item{
+		Item: "gun",
+	}
+	itemId := uuid.NewString()
+	_, err = client.GameHustlerItem.
+		Create().
+		SetItem(item.Item).
+		SetID(itemId).
+		Save(context.TODO())
+	if err != nil {
+		assert.FailNow("item: ", err.Error())
+	}
+
+	quest := Quest{
+		Quest:     "rob and steal",
+		Completed: true,
+	}
+	questId := uuid.NewString()
+	_, err = client.GameHustlerQuest.
+		Create().
+		SetQuest(quest.Quest).
+		SetCompleted(quest.Completed).
+		SetID(questId).
+		Save(context.TODO())
+	if err != nil {
+		assert.FailNow("quest: ", err.Error())
+	}
+
+	gameHustler, err := client.GameHustler.
+		Create().
+		SetID(p.Id.String()).
+		AddItemIDs(itemId).
+		AddQuestIDs(questId).
+		SetLastPosition(schema.Position{CurrentMap: "dopecity", X: p.LastPosition.X, Y: p.LastPosition.Y}).
+		Save(context.TODO())
+	if err != nil {
+		assert.FailNow("gameHustler: ", err.Error())
+	}
+
+	if err := p.PopulateFromDB(context.TODO(), client, gameHustler, &zerolog.Logger{}); err != nil {
+		assert.FailNow(err.Error())
+	}
+
+	assert.Equal(hustlerName, p.Name)
+	assert.Equal(p.Items[0], item)
+	assert.Equal(p.Quests[0], quest)
 }
