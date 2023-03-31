@@ -457,6 +457,36 @@ func handlePlayerUpdateCitizenState(p *Player, msg json.RawMessage, ctx context.
 	log.Info().Msgf("player %s | %s updated citizen state: %s", p.Id, p.Name, data.Citizen)
 }
 
+func (p *Player) PopulateFromDB(ctx context.Context, client *ent.Client, gameHustler *ent.GameHustler, log *zerolog.Logger) error {
+	// query items and quests
+	hustler, err := client.Hustler.Get(ctx, gameHustler.ID)
+	if err != nil {
+		log.Err(err).Msgf("could not get hustler: %s", gameHustler.ID)
+		return fmt.Errorf("could not get hustler")
+	}
+	p.Name = hustler.Name
+
+	items, err := gameHustler.QueryItems().All(ctx)
+	if err != nil {
+		log.Err(err).Msgf("could not get items for hustler: %s", gameHustler.ID)
+		return fmt.Errorf("could not get items for hustler")
+	}
+	quests, err := gameHustler.QueryQuests().All(ctx)
+	if err != nil {
+		log.Err(err).Msgf("could not get quests for hustler: %s", gameHustler.ID)
+		return fmt.Errorf("could not get quests for hustler")
+	}
+
+	for _, gameItem := range items {
+		p.Items = append(p.Items, item.Item{Item: gameItem.Item})
+	}
+	for _, quest := range quests {
+		p.Quests = append(p.Quests, Quest{Quest: quest.Quest, Completed: quest.Completed})
+	}
+
+	return nil
+}
+
 func RemoveItemEntity(itemEntities *[]*item.ItemEntity, itemEntity *item.ItemEntity) bool {
 	removed := false
 
