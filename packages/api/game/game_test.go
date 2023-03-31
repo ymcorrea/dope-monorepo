@@ -64,10 +64,10 @@ func TestUpdateBotPosition(t *testing.T) {
 		},
 	}
 
-	players := make([]*player.Player, 1)
-	players[0] = &bot
-
-	UpdateBotPosition(&players)
+	g := Game{
+		Players: []*player.Player{&bot},
+	}
+	g.UpdateBotPosition()
 
 	assert.Equal(x, bot.LastPosition.X)
 	assert.Equal(y, bot.LastPosition.Y)
@@ -482,4 +482,89 @@ func WssFactory() *httptest.Server {
 			conn.WriteJSON(msg)
 		}
 	}))
+}
+
+func TestGenerateHandshakeData(t *testing.T) {
+	assert := assert.New(t)
+
+	p := player.Player{
+		HustlerId: uuid.NewString(),
+		Id:        uuid.New(),
+	}
+
+	client := enttest.Open(t, "sqlite3", "file:ent?mode=memory&_fk=1")
+	defer client.Close()
+
+	_, err := client.GameHustler.
+		Create().
+		SetLastPosition(schema.Position{X: 20, Y: 20, CurrentMap: "dopecity"}).
+		SetID(p.HustlerId).
+		Save(context.TODO())
+	if err != nil {
+		assert.FailNow(err.Error())
+	}
+
+	_, err = client.GameHustlerRelation.
+		Create().
+		SetCitizen("tommy").
+		SetText(0).
+		SetConversation("robbery").
+		SetHustlerID(p.HustlerId).
+		SetID(uuid.NewString()).
+		Save(context.TODO())
+	if err != nil {
+		assert.FailNow(err.Error())
+	}
+
+	g := Game{
+		ItemEntities: []*item.ItemEntity{
+			{
+				Id: uuid.New(),
+			},
+		},
+		Players: []*player.Player{
+			{
+				Id: uuid.New(),
+			},
+			&p,
+		},
+	}
+
+	handshake := g.GenerateHandshakeData(context.TODO(), client, &p)
+	var relations map[string]player.Relation
+	err = json.Unmarshal(handshake.Relations, &relations)
+	if err != nil {
+		assert.FailNow(err.Error())
+	}
+
+	assert.Equal(p.Id.String(), handshake.Id)
+	assert.Len(handshake.Players, 1)
+	assert.Equal(g.ItemEntities[0].Id.String(), handshake.ItemEntities[0].Id)
+	assert.Equal(g.Players[0].Id.String(), handshake.Players[0].Id)
+	assert.Equal("robbery", relations["tommy"].Conversation)
+}
+
+func TestHandlePlayerJoin_BotOrNoHustler(t *testing.T) {
+	assert := assert.New(t)
+
+	g := Game{
+		Register:  make(chan *player.Player, 1),
+		Broadcast: make(chan messages.BroadcastMessage, 1),
+	}
+
+	g.HandlePlayerJoin(context.TODO(), nil, nil, nil)
+
+	gOut := <-g.Register
+	<-g.Broadcast
+
+	assert.Empty(gOut.HustlerId)
+	assert.Equal("Hustler", gOut.Name)
+	assert.NotEmpty(gOut.Id)
+}
+
+func TestCheckWhitelist(t *testing.T) {
+	assert := assert.New(t)
+
+	assert.True(isWhitelisted("2", ""))
+	assert.False(isWhitelisted("NotANum", ""))
 }
