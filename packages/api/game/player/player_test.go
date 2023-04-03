@@ -10,6 +10,7 @@ import (
 	"github.com/dopedao/dope-monorepo/packages/api/game/events"
 	"github.com/dopedao/dope-monorepo/packages/api/game/item"
 	"github.com/dopedao/dope-monorepo/packages/api/game/messages"
+	"github.com/dopedao/dope-monorepo/packages/api/internal/ent"
 	"github.com/dopedao/dope-monorepo/packages/api/internal/ent/enttest"
 	"github.com/dopedao/dope-monorepo/packages/api/internal/ent/hustler"
 	"github.com/dopedao/dope-monorepo/packages/api/internal/ent/schema"
@@ -20,6 +21,39 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 )
+
+func NewPlayerMock(broadcastChan *chan messages.BroadcastMessage, isBot bool) *Player {
+	p := Player{
+		Id:   uuid.New(),
+		Send: make(chan messages.BaseMessage, 1),
+		Position: dopemap.Position{
+			X: 10,
+			Y: 10,
+		},
+		LastPosition: dopemap.Position{
+			X: 5,
+			Y: 5,
+		},
+		Direction:  "NE",
+		CurrentMap: "memphis",
+		Chatcolor:  "blue",
+	}
+
+	if broadcastChan != nil {
+		p.Broadcast = *broadcastChan
+	}
+
+	if !isBot {
+		p.HustlerId = uuid.NewString()
+		p.Conn = &websocket.Conn{}
+	}
+
+	return &p
+}
+
+func newDbClientMock(t *testing.T) *ent.Client {
+	return enttest.Open(t, "sqlite3", "file:ent?mode=memory&_fk=1")
+}
 
 func TestMove(t *testing.T) {
 	p := Player{}
@@ -32,8 +66,8 @@ func TestMove(t *testing.T) {
 	p.Move(x, y, direction)
 
 	assert.Equal(direction, p.Direction)
-	assert.Equal(p.Position.X, x)
-	assert.Equal(p.Position.Y, y)
+	assert.Equal(x, p.Position.X)
+	assert.Equal(y, p.Position.Y)
 }
 
 func TestRemoveItemEntity(t *testing.T) {
@@ -64,21 +98,13 @@ func TestRemoveItemEntity(t *testing.T) {
 func TestAddItem(t *testing.T) {
 	assert := assert.New(t)
 
-	testChan := make(chan messages.BaseMessage, 1)
-	defer close(testChan)
+	p := NewPlayerMock(nil, false)
 
-	client := enttest.Open(t, "sqlite3", "file:ent?mode=memory&_fk=1")
-	defer client.Close()
+	client := newDbClientMock(t)
 
-	hustlerId := "test"
-	_, err := client.GameHustler.Create().SetID(hustlerId).SetLastPosition(schema.Position{X: 10, Y: 10}).Save(context.TODO())
+	_, err := client.GameHustler.Create().SetID(p.HustlerId).SetLastPosition(schema.Position{X: 10, Y: 10}).Save(context.TODO())
 	if err != nil {
 		assert.FailNow(err.Error())
-	}
-
-	p := Player{
-		HustlerId: hustlerId,
-		Send:      testChan,
 	}
 
 	item := item.Item{
@@ -93,7 +119,7 @@ func TestAddItem(t *testing.T) {
 		assert.FailNow(err.Error())
 	}
 
-	out := <-testChan
+	out := <-p.Send
 
 	assert.Equal(expected.Event, out.Event)
 }
@@ -101,8 +127,7 @@ func TestAddItem(t *testing.T) {
 func TestAddItem_HandleNoHustler(t *testing.T) {
 	assert := assert.New(t)
 
-	client := enttest.Open(t, "sqlite3", "file:ent?mode=memory&_fk=1")
-	defer client.Close()
+	client := newDbClientMock(t)
 
 	p := Player{}
 
@@ -117,12 +142,9 @@ func TestAddItem_HandleNoHustler(t *testing.T) {
 func TestAddItem_HandleDbError(t *testing.T) {
 	assert := assert.New(t)
 
-	client := enttest.Open(t, "sqlite3", "file:ent?mode=memory&_fk=1")
-	defer client.Close()
+	client := newDbClientMock(t)
 
-	p := Player{
-		HustlerId: "123",
-	}
+	p := NewPlayerMock(nil, false)
 
 	if err := p.AddItem(context.TODO(), client, item.Item{}, true); err != nil {
 		assert.Error(err)
@@ -135,20 +157,12 @@ func TestAddItem_HandleDbError(t *testing.T) {
 func TestAddQuest(t *testing.T) {
 	assert := assert.New(t)
 
-	client := enttest.Open(t, "sqlite3", "file:ent?mode=memory&_fk=1")
-	defer client.Close()
+	client := newDbClientMock(t)
+	p := NewPlayerMock(nil, false)
 
-	testChan := make(chan messages.BaseMessage, 1)
-
-	hustlerId := "test"
-	_, err := client.GameHustler.Create().SetID(hustlerId).SetLastPosition(schema.Position{X: 10, Y: 10}).Save(context.TODO())
+	_, err := client.GameHustler.Create().SetID(p.HustlerId).SetLastPosition(schema.Position{X: 10, Y: 10}).Save(context.TODO())
 	if err != nil {
 		assert.FailNow(err.Error())
-	}
-
-	p := Player{
-		HustlerId: hustlerId,
-		Send:      testChan,
 	}
 
 	quest := Quest{
@@ -164,15 +178,14 @@ func TestAddQuest(t *testing.T) {
 		assert.FailNow(err.Error())
 	}
 
-	out := <-testChan
+	out := <-p.Send
 
 	assert.Equal(expected.Event, out.Event)
 }
 func TestAddQuest_HandleNoHustler(t *testing.T) {
 	assert := assert.New(t)
 
-	client := enttest.Open(t, "sqlite3", "file:ent?mode=memory&_fk=1")
-	defer client.Close()
+	client := newDbClientMock(t)
 
 	p := Player{}
 
@@ -187,8 +200,7 @@ func TestAddQuest_HandleNoHustler(t *testing.T) {
 func TestAddQuest_HandleDbError(t *testing.T) {
 	assert := assert.New(t)
 
-	client := enttest.Open(t, "sqlite3", "file:ent?mode=memory&_fk=1")
-	defer client.Close()
+	client := newDbClientMock(t)
 
 	p := Player{}
 
@@ -204,20 +216,10 @@ func TestHandlePlayerLeave(t *testing.T) {
 	assert := assert.New(t)
 
 	broadcastChan := make(chan messages.BroadcastMessage, 1)
-	defer close(broadcastChan)
-
 	unregisterChan := make(chan *Player, 1)
-	defer close(unregisterChan)
 
-	playerChan := make(chan messages.BaseMessage)
-
-	pId := uuid.New()
-	p := Player{
-		Id:         pId,
-		Unregister: unregisterChan,
-		Broadcast:  broadcastChan,
-		Send:       playerChan,
-	}
+	p := NewPlayerMock(&broadcastChan, false)
+	p.Unregister = unregisterChan
 
 	unregister, _ := json.Marshal(item.IdData{
 		Id: p.Id.String(),
@@ -230,13 +232,13 @@ func TestHandlePlayerLeave(t *testing.T) {
 		},
 	}
 
-	handlePlayerLeave(&p)
+	handlePlayerLeave(p)
 
 	broadcastOut := <-broadcastChan
 	unregisterOut := <-unregisterChan
 
 	assert.Equal(moveMsg, broadcastOut)
-	assert.Equal(&p, unregisterOut)
+	assert.Equal(p, unregisterOut)
 }
 
 func TestHandlePlayerMove(t *testing.T) {
@@ -267,13 +269,10 @@ func TestHandlePlayerMove(t *testing.T) {
 func TestHandlePlayerMove_InvalidJson(t *testing.T) {
 	assert := assert.New(t)
 
-	pChan := make(chan messages.BaseMessage, 1)
-	p := Player{
-		Send: pChan,
-	}
+	p := NewPlayerMock(nil, false)
 
-	handlePlayerMove(&p, json.RawMessage{})
-	out := <-pChan
+	handlePlayerMove(p, json.RawMessage{})
+	out := <-p.Send
 
 	var err messages.ErrorMessageData
 	json.Unmarshal(out.Data, &err)
@@ -285,14 +284,10 @@ func TestHandlePlayerMove_InvalidJson(t *testing.T) {
 func TestHandlePlayerUpdateMap_InvalidJson(t *testing.T) {
 	assert := assert.New(t)
 
-	testChan := make(chan messages.BaseMessage, 1)
-	p := Player{
-		Send: testChan,
-	}
+	p := NewPlayerMock(nil, false)
+	handlePlayerUpdateMap(p, json.RawMessage{}, &zerolog.Logger{})
 
-	handlePlayerUpdateMap(&p, json.RawMessage{}, &zerolog.Logger{})
-
-	out := <-testChan
+	out := <-p.Send
 
 	var err messages.ErrorMessageData
 	json.Unmarshal(out.Data, &err)
@@ -304,14 +299,8 @@ func TestHandlePlayerUpdateMap_InvalidJson(t *testing.T) {
 func TestHandlePlayerUpdateMap(t *testing.T) {
 	assert := assert.New(t)
 
-	broadcastChan := make(chan messages.BroadcastMessage, 1)
-	defer close(broadcastChan)
-	p := Player{
-		Id:        uuid.New(),
-		Broadcast: broadcastChan,
-	}
-
-	log := zerolog.Logger{}
+	gChannel := make(chan messages.BroadcastMessage, 1)
+	p := NewPlayerMock(&gChannel, false)
 
 	d := PlayerUpdateMapData{
 		CurrentMap: "memphis",
@@ -321,10 +310,10 @@ func TestHandlePlayerUpdateMap(t *testing.T) {
 
 	data, _ := json.Marshal(d)
 
-	handlePlayerUpdateMap(&p, data, &log)
+	handlePlayerUpdateMap(p, data, &zerolog.Logger{})
 
 	var outData PlayerUpdateMapClientData
-	chanOut := <-broadcastChan
+	chanOut := <-gChannel
 
 	json.Unmarshal(chanOut.Message.Data, &outData)
 
@@ -338,22 +327,15 @@ func TestHandlePlayerUpdateMap(t *testing.T) {
 func TestHandlePlayerChatMessage(t *testing.T) {
 	assert := assert.New(t)
 
-	log := zerolog.Logger{}
-
 	broadcastChan := make(chan messages.BroadcastMessage, 1)
-	defer close(broadcastChan)
-	p := Player{
-		Id:        uuid.New(),
-		Broadcast: broadcastChan,
-		Chatcolor: "blue",
-	}
+	p := NewPlayerMock(&broadcastChan, false)
 
 	chatMessage := ChatMessageData{
 		Message: "wassup playa",
 	}
 
 	chatMessageJson, _ := json.Marshal(chatMessage)
-	handlePlayerChatMessage(&p, chatMessageJson, &log)
+	handlePlayerChatMessage(p, chatMessageJson, &zerolog.Logger{})
 
 	out := <-broadcastChan
 
@@ -369,21 +351,14 @@ func TestHandlePlayerChatMessage(t *testing.T) {
 func TestHandlePlayerChatMessage_HandleEmptyMsg(t *testing.T) {
 	assert := assert.New(t)
 
-	log := zerolog.Logger{}
-
 	broadcastChan := make(chan messages.BroadcastMessage)
-	defer close(broadcastChan)
-	p := Player{
-		Broadcast: broadcastChan,
-	}
-
+	p := NewPlayerMock(&broadcastChan, false)
 	chatMessage := ChatMessageData{}
 
 	chatMessageJson, _ := json.Marshal(chatMessage)
-	handlePlayerChatMessage(&p, chatMessageJson, &log)
+	handlePlayerChatMessage(p, chatMessageJson, &zerolog.Logger{})
 
 	var out messages.BroadcastMessage
-
 	// dont block when nothing comes in
 	select {
 	case out = <-broadcastChan:
@@ -396,14 +371,10 @@ func TestHandlePlayerChatMessage_HandleEmptyMsg(t *testing.T) {
 func TestHandlePlayerPickupItemEntity(t *testing.T) {
 	assert := assert.New(t)
 
-	testChan := make(chan messages.BaseMessage, 1)
-	defer close(testChan)
-
 	broadcastChan := make(chan messages.BroadcastMessage, 1)
-	defer close(broadcastChan)
+	p := NewPlayerMock(&broadcastChan, false)
 
-	client := enttest.Open(t, "sqlite3", "file:ent?mode=memory&_fk=1")
-	defer client.Close()
+	client := newDbClientMock(t)
 
 	hustlerId := "test"
 	log := zerolog.Logger{}
@@ -422,15 +393,10 @@ func TestHandlePlayerPickupItemEntity(t *testing.T) {
 		Id: itemId,
 	})
 
-	p := Player{
-		HustlerId: hustlerId,
-		Send:      testChan,
-		Broadcast: broadcastChan,
-		GameItems: gameItems,
-	}
+	p.GameItems = gameItems
 
 	itemJson, _ := json.Marshal(i)
-	handlePlayerPickupItemEntity(&p, itemJson, context.TODO(), &log, client)
+	handlePlayerPickupItemEntity(p, itemJson, context.TODO(), &log, client)
 
 	pOutBroadcast := <-broadcastChan
 
@@ -447,21 +413,12 @@ func TestHandlePlayerPickupItemEntity(t *testing.T) {
 func TestHandlePlayerPickupItemEntity_NoHustler(t *testing.T) {
 	assert := assert.New(t)
 
-	testChan := make(chan messages.BaseMessage, 1)
-	defer close(testChan)
+	client := newDbClientMock(t)
+	p := NewPlayerMock(nil, true)
 
-	client := enttest.Open(t, "sqlite3", "file:ent?mode=memory&_fk=1")
-	defer client.Close()
+	handlePlayerPickupItemEntity(p, json.RawMessage{}, context.TODO(), &zerolog.Logger{}, client)
 
-	log := zerolog.Logger{}
-
-	p := Player{
-		Send: testChan,
-	}
-
-	handlePlayerPickupItemEntity(&p, json.RawMessage{}, context.TODO(), &log, client)
-
-	out := <-testChan
+	out := <-p.Send
 
 	var err messages.ErrorMessageData
 	json.Unmarshal(out.Data, &err)
@@ -473,18 +430,8 @@ func TestHandlePlayerPickupItemEntity_NoHustler(t *testing.T) {
 func TestHandlePlayerPickupItemEntity_InvalidItemId(t *testing.T) {
 	assert := assert.New(t)
 
-	testChan := make(chan messages.BaseMessage, 1)
-	defer close(testChan)
-
-	client := enttest.Open(t, "sqlite3", "file:ent?mode=memory&_fk=1")
-	defer client.Close()
-
-	log := zerolog.Logger{}
-
-	p := Player{
-		HustlerId: uuid.NewString(),
-		Send:      testChan,
-	}
+	client := newDbClientMock(t)
+	p := NewPlayerMock(nil, false)
 
 	i := item.IdData{
 		Id: "fake",
@@ -492,9 +439,9 @@ func TestHandlePlayerPickupItemEntity_InvalidItemId(t *testing.T) {
 
 	itemJson, _ := json.Marshal(i)
 
-	handlePlayerPickupItemEntity(&p, itemJson, context.TODO(), &log, client)
+	handlePlayerPickupItemEntity(p, itemJson, context.TODO(), &zerolog.Logger{}, client)
 
-	out := <-testChan
+	out := <-p.Send
 
 	var err messages.ErrorMessageData
 	json.Unmarshal(out.Data, &err)
@@ -506,18 +453,8 @@ func TestHandlePlayerPickupItemEntity_InvalidItemId(t *testing.T) {
 func TestHandlePlayerPickupItemEntity_ItemNotInGame(t *testing.T) {
 	assert := assert.New(t)
 
-	testChan := make(chan messages.BaseMessage, 1)
-	defer close(testChan)
-
-	client := enttest.Open(t, "sqlite3", "file:ent?mode=memory&_fk=1")
-	defer client.Close()
-
-	log := zerolog.Logger{}
-
-	p := Player{
-		HustlerId: uuid.NewString(),
-		Send:      testChan,
-	}
+	client := newDbClientMock(t)
+	p := NewPlayerMock(nil, false)
 
 	i := item.IdData{
 		Id: uuid.NewString(),
@@ -525,9 +462,9 @@ func TestHandlePlayerPickupItemEntity_ItemNotInGame(t *testing.T) {
 
 	itemJson, _ := json.Marshal(i)
 
-	handlePlayerPickupItemEntity(&p, itemJson, context.TODO(), &log, client)
+	handlePlayerPickupItemEntity(p, itemJson, context.TODO(), &zerolog.Logger{}, client)
 
-	out := <-testChan
+	out := <-p.Send
 
 	var err messages.ErrorMessageData
 	json.Unmarshal(out.Data, &err)
@@ -539,15 +476,8 @@ func TestHandlePlayerPickupItemEntity_ItemNotInGame(t *testing.T) {
 func TestHandlePlayerUpdateCitizenState(t *testing.T) {
 	assert := assert.New(t)
 
-	client := enttest.Open(t, "sqlite3", "file:ent?mode=memory&_fk=1")
-	defer client.Close()
-
-	pChan := make(chan messages.BaseMessage, 1)
-	log := zerolog.Logger{}
-	p := Player{
-		HustlerId: uuid.NewString(),
-		Send:      pChan,
-	}
+	client := newDbClientMock(t)
+	p := NewPlayerMock(nil, false)
 
 	_, dbErr := client.GameHustler.Create().SetID(p.HustlerId).SetLastPosition(schema.Position{X: 10, Y: 10}).Save(context.TODO())
 	if dbErr != nil {
@@ -561,7 +491,7 @@ func TestHandlePlayerUpdateCitizenState(t *testing.T) {
 	}
 
 	dataJson, _ := json.Marshal(data)
-	handlePlayerUpdateCitizenState(&p, dataJson, context.TODO(), &log, client)
+	handlePlayerUpdateCitizenState(p, dataJson, context.TODO(), &zerolog.Logger{}, client)
 
 	res, _ := client.GameHustlerRelation.Get(context.TODO(), fmt.Sprintf("%s:%s", p.HustlerId, data.Citizen))
 
@@ -572,19 +502,13 @@ func TestHandlePlayerUpdateCitizenState(t *testing.T) {
 
 func TestHandlePlayerUpdateCitizenState_NoHustlerId(t *testing.T) {
 	assert := assert.New(t)
+	client := newDbClientMock(t)
 
-	client := enttest.Open(t, "sqlite3", "file:ent?mode=memory&_fk=1")
-	defer client.Close()
+	p := NewPlayerMock(nil, true)
 
-	pChan := make(chan messages.BaseMessage, 1)
-	log := zerolog.Logger{}
-	p := Player{
-		Send: pChan,
-	}
+	handlePlayerUpdateCitizenState(p, json.RawMessage{}, context.TODO(), &zerolog.Logger{}, client)
 
-	handlePlayerUpdateCitizenState(&p, json.RawMessage{}, context.TODO(), &log, client)
-
-	pChanOut := <-pChan
+	pChanOut := <-p.Send
 
 	var errMsg messages.ErrorMessageData
 	json.Unmarshal(pChanOut.Data, &errMsg)
@@ -596,19 +520,13 @@ func TestHandlePlayerUpdateCitizenState_NoHustlerId(t *testing.T) {
 func TestHandlePlayerUpdateCitizenState_InvalidJson(t *testing.T) {
 	assert := assert.New(t)
 
-	client := enttest.Open(t, "sqlite3", "file:ent?mode=memory&_fk=1")
-	defer client.Close()
+	client := newDbClientMock(t)
 
-	pChan := make(chan messages.BaseMessage, 1)
-	log := zerolog.Logger{}
-	p := Player{
-		HustlerId: uuid.NewString(),
-		Send:      pChan,
-	}
+	p := NewPlayerMock(nil, false)
 
-	handlePlayerUpdateCitizenState(&p, json.RawMessage{}, context.TODO(), &log, client)
+	handlePlayerUpdateCitizenState(p, json.RawMessage{}, context.TODO(), &zerolog.Logger{}, client)
 
-	out := <-pChan
+	out := <-p.Send
 	var err messages.ErrorMessageData
 	json.Unmarshal(out.Data, &err)
 
@@ -656,41 +574,23 @@ func TestNewPlayer(t *testing.T) {
 
 func TestReadPump_LeaveOnErr(t *testing.T) {
 	assert := assert.New(t)
+	client := newDbClientMock(t)
 
-	conn := websocket.Conn{}
-	unregister := make(chan *Player, 1)
-
-	p := Player{
-		Id:         uuid.New(),
-		Conn:       &conn,
-		Unregister: unregister,
-	}
-
-	client := enttest.Open(t, "sqlite3", "file:ent?mode=memory&_fk=1")
-	defer client.Close()
+	p := NewPlayerMock(nil, false)
+	p.Unregister = make(chan *Player, 1)
 
 	go p.ReadPump(context.TODO(), client)
 
-	out := <-unregister
+	out := <-p.Unregister
 
-	assert.Equal(&p, out)
+	assert.Equal(p, out)
 	assert.Equal(p.Id, out.Id)
 }
 
 func TestSerialize(t *testing.T) {
 	assert := assert.New(t)
 
-	p := Player{
-		Id:         uuid.New(),
-		HustlerId:  "test",
-		Name:       "Playa Fly",
-		CurrentMap: "Memphis",
-		Position: dopemap.Position{
-			X: 20,
-			Y: 20,
-		},
-	}
-
+	p := NewPlayerMock(nil, false)
 	serialized := p.Serialize()
 	sId, _ := uuid.Parse(serialized.Id)
 
@@ -704,18 +604,9 @@ func TestSerialize(t *testing.T) {
 
 func TestPopulateFromDB(t *testing.T) {
 	assert := assert.New(t)
-	client := enttest.Open(t, "sqlite3", "file:ent?mode=memory&_fk=1")
-	defer client.Close()
+	client := newDbClientMock(t)
 
-	p := Player{
-		Id: uuid.New(),
-		LastPosition: dopemap.Position{
-			X: 10,
-			Y: 10,
-		},
-		Items:  []item.Item{},
-		Quests: []Quest{},
-	}
+	p := NewPlayerMock(nil, false)
 
 	hustlerName := "crunchy black"
 	_, err := client.Hustler.

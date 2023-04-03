@@ -3,8 +3,6 @@ package game
 import (
 	"context"
 	"encoding/json"
-	"net/http"
-	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -23,6 +21,57 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func newPlayerMock(broadcastChan *chan messages.BroadcastMessage, isBot bool) *player.Player {
+	p := player.Player{
+		Id:        uuid.New(),
+		Send:      make(chan messages.BaseMessage, 1),
+		Broadcast: *broadcastChan,
+		Position: dopemap.Position{
+			X: 10,
+			Y: 10,
+		},
+		LastPosition: dopemap.Position{
+			X: 5,
+			Y: 5,
+		},
+		Direction:  "NE",
+		CurrentMap: "memphis",
+	}
+
+	if !isBot {
+		p.HustlerId = uuid.NewString()
+		p.Conn = &websocket.Conn{}
+	}
+
+	return &p
+}
+
+func newDbClientMock(t *testing.T) *ent.Client {
+	return enttest.Open(t, "sqlite3", "file:ent?mode=memory&_fk=1")
+}
+
+func newItemMock() *item.ItemEntity {
+	return &item.ItemEntity{
+		Id: uuid.New(),
+	}
+}
+
+func newGameMock(playerCount int, isBot bool, itemCount int) *Game {
+	g := Game{
+		Broadcast: make(chan messages.BroadcastMessage, 1),
+	}
+
+	for i := 0; i < playerCount; i++ {
+		g.Players = append(g.Players, newPlayerMock(&g.Broadcast, isBot))
+	}
+
+	for i := 0; i < itemCount; i++ {
+		g.ItemEntities = append(g.ItemEntities, newItemMock())
+	}
+
+	return &g
+}
+
 func TestAddBots(t *testing.T) {
 	assert := assert.New(t)
 
@@ -36,68 +85,43 @@ func TestAddBots(t *testing.T) {
 func TestPlayerByConn(t *testing.T) {
 	assert := assert.New(t)
 
-	g := Game{}
-	p := player.Player{
-		Id:   uuid.New(),
-		Conn: &websocket.Conn{},
-	}
+	g := newGameMock(2, false, 0)
+	firstPlayer := g.Players[0]
 
-	g.Players = append(g.Players, &p)
+	res := g.PlayerByConn(firstPlayer.Conn)
 
-	res := g.PlayerByConn(p.Conn)
-
-	assert.Equal(p.Conn, res.Conn)
-	assert.Equal(p.Id, res.Id)
+	assert.Equal(firstPlayer.Conn, res.Conn)
+	assert.Equal(firstPlayer.Id, res.Id)
 }
 
 func TestUpdateBotPosition(t *testing.T) {
 	assert := assert.New(t)
 
-	var x float32 = 10
-	var y float32 = 20
+	g := newGameMock(1, true, 0)
+	currPos := g.Players[0].Position
 
-	bot := player.Player{
-		Conn: nil,
-		Position: dopemap.Position{
-			X: x,
-			Y: y,
-		},
-	}
-
-	g := Game{
-		Players: []*player.Player{&bot},
-	}
 	g.UpdateBotPosition()
+	lastPos := g.Players[0].LastPosition
 
-	assert.Equal(x, bot.LastPosition.X)
-	assert.Equal(y, bot.LastPosition.Y)
+	assert.Equal(currPos.X, lastPos.X)
+	assert.Equal(currPos.Y, lastPos.Y)
 }
 
 func TestPlayerByHustlerID(t *testing.T) {
 	assert := assert.New(t)
 
-	players := make([]*player.Player, 2)
-	players[0] = &player.Player{HustlerId: uuid.NewString()}
-	players[1] = &player.Player{HustlerId: uuid.NewString()}
+	g := newGameMock(2, false, 0)
+	secPlayer := g.Players[1]
 
-	g := Game{
-		Players: players,
-	}
+	out := g.PlayerByHustlerID(secPlayer.HustlerId)
 
-	out := g.PlayerByHustlerID(players[1].HustlerId)
-
-	assert.Equal(out, players[1])
+	assert.Equal(out, secPlayer)
 }
 
 func TestPlayerByHustlerID_NotFound(t *testing.T) {
 	assert := assert.New(t)
 
-	players := make([]*player.Player, 1)
-	players[0] = &player.Player{HustlerId: uuid.NewString()}
-
-	g := Game{
-		Players: players,
-	}
+	g := newGameMock(2, false, 0)
 
 	out := g.PlayerByHustlerID(uuid.NewString())
 
@@ -107,29 +131,18 @@ func TestPlayerByHustlerID_NotFound(t *testing.T) {
 func TestPlayerByUUID(t *testing.T) {
 	assert := assert.New(t)
 
-	players := make([]*player.Player, 2)
-	players[0] = &player.Player{Id: uuid.New()}
-	players[1] = &player.Player{Id: uuid.New()}
+	g := newGameMock(2, true, 0)
+	firstPlayer := g.Players[1]
 
-	g := Game{
-		Players: players,
-	}
+	out := g.PlayerByUUID(firstPlayer.Id)
 
-	out := g.PlayerByUUID(players[1].Id)
-
-	assert.Equal(out, players[1])
+	assert.Equal(out, firstPlayer)
 }
 
 func TestPlayerByUUID_NotFound(t *testing.T) {
 	assert := assert.New(t)
 
-	players := make([]*player.Player, 2)
-	players[0] = &player.Player{Id: uuid.New()}
-	players[1] = &player.Player{Id: uuid.New()}
-
-	g := Game{
-		Players: players,
-	}
+	g := newGameMock(2, true, 0)
 
 	out := g.PlayerByUUID(uuid.New())
 
@@ -139,59 +152,29 @@ func TestPlayerByUUID_NotFound(t *testing.T) {
 func TestDispatchPlayerJoin(t *testing.T) {
 	assert := assert.New(t)
 
-	gChan := make(chan messages.BroadcastMessage, 1)
+	g := newGameMock(1, true, 0)
+	newP := *newPlayerMock(&g.Broadcast, true)
 
-	p1 := player.Player{
-		Id: uuid.New(),
-	}
+	g.DispatchPlayerJoin(context.TODO(), &newP)
 
-	p2 := player.Player{
-		Id: uuid.New(),
-	}
-
-	players := make([]*player.Player, 2)
-	players[0] = &p1
-	players[1] = &p2
-
-	g := Game{
-		Players:   players,
-		Broadcast: gChan,
-	}
-
-	g.DispatchPlayerJoin(context.TODO(), &p2)
-
-	out1 := <-gChan
+	out1 := <-g.Broadcast
 	var joinData player.PlayerData
 	json.Unmarshal(out1.Message.Data, &joinData)
 
 	assert.Equal(events.PLAYER_JOIN, out1.Message.Event)
-	assert.Equal(p2.Id.String(), joinData.Id)
+	assert.Equal(newP.Id.String(), joinData.Id)
 
 	// dont send msg to p2
-	assert.True(!out1.Condition(&p2))
+	assert.True(!out1.Condition(&newP))
 }
 
 func TestDispatchPlayerLeave(t *testing.T) {
 	assert := assert.New(t)
 
-	g := Game{
-		Broadcast: make(chan messages.BroadcastMessage, 1),
-	}
+	g := newGameMock(2, false, 0)
+	p1 := g.Players[0]
 
-	p1 := player.Player{
-		Conn:      &websocket.Conn{},
-		HustlerId: uuid.NewString(),
-		Id:        uuid.New(),
-		Broadcast: g.Broadcast,
-		Send:      make(chan messages.BaseMessage, 1),
-	}
-
-	players := make([]*player.Player, 1)
-	players[0] = &p1
-
-	g.Players = players
-
-	g.DispatchPlayerLeave(context.TODO(), players[0])
+	g.DispatchPlayerLeave(context.TODO(), p1)
 
 	gOut := <-g.Broadcast
 	var p1LeaveData item.IdData
@@ -204,43 +187,23 @@ func TestDispatchPlayerLeave(t *testing.T) {
 func TestGenerateItemEntitiesData(t *testing.T) {
 	assert := assert.New(t)
 
-	item1 := item.ItemEntity{
-		Id: uuid.New(),
-	}
-
-	item2 := item.ItemEntity{
-		Id: uuid.New(),
-	}
-
-	g := Game{
-		ItemEntities: []*item.ItemEntity{&item1, &item2},
-	}
+	g := newGameMock(0, true, 2)
 
 	itemEntData := g.GenerateItemEntitiesData()
 
-	assert.Equal(item1.Id.String(), itemEntData[0].Id)
-	assert.Equal(item2.Id.String(), itemEntData[1].Id)
+	assert.Equal(g.ItemEntities[0].Id.String(), itemEntData[0].Id)
+	assert.Equal(g.ItemEntities[1].Id.String(), itemEntData[1].Id)
 }
 
 func TestGeneratePlayersData(t *testing.T) {
 	assert := assert.New(t)
 
-	p1 := player.Player{
-		Id: uuid.New(),
-	}
-
-	p2 := player.Player{
-		Id: uuid.New(),
-	}
-
-	g := Game{
-		Players: []*player.Player{&p1, &p2},
-	}
+	g := newGameMock(2, false, 0)
 
 	playerData := g.GeneratePlayersData()
 
-	assert.Equal(p1.Id.String(), playerData[0].Id)
-	assert.Equal(p2.Id.String(), playerData[1].Id)
+	assert.Equal(g.Players[0].Id.String(), playerData[0].Id)
+	assert.Equal(g.Players[1].Id.String(), playerData[1].Id)
 }
 
 /*
@@ -283,50 +246,27 @@ func TestUnregisterPlayer_RemovesPlayer(t *testing.T) {
 func TestUnregisterPlayer_PanicIfCantGetHustler(t *testing.T) {
 	assert := assert.New(t)
 
-	client := enttest.Open(t, "sqlite3", "file:ent?mode=memory&_fk=1")
-	defer client.Close()
-
-	p := player.Player{
-		HustlerId: uuid.NewString(),
-		Position: dopemap.Position{
-			X: 10,
-			Y: 10,
-		},
-		CurrentMap: "memphis",
-	}
-
-	g := NewGame()
-	g.Players = append(g.Players, &p)
+	g := newGameMock(2, false, 0)
 
 	assert.Panics(func() {
-		g.unregisterPlayer(&p, context.TODO(), &ent.Client{}, &zerolog.Logger{})
+		g.unregisterPlayer(g.Players[0], context.TODO(), &ent.Client{}, &zerolog.Logger{})
 	})
 }
 
 func TestUnregisterPlayer_SaveLastPos(t *testing.T) {
 	assert := assert.New(t)
 
-	client := enttest.Open(t, "sqlite3", "file:ent?mode=memory&_fk=1")
-	defer client.Close()
+	client := newDbClientMock(t)
 
-	p := player.Player{
-		HustlerId: uuid.NewString(),
-		Position: dopemap.Position{
-			X: 20,
-			Y: 20,
-		},
-		CurrentMap: "memphis",
-	}
+	g := newGameMock(1, false, 0)
+	p := g.Players[0]
 
 	_, err := client.GameHustler.Create().SetID(p.HustlerId).SetLastPosition(schema.Position{X: 10, Y: 10}).Save(context.TODO())
 	if err != nil {
 		assert.FailNow(err.Error())
 	}
 
-	g := NewGame()
-	g.Players = append(g.Players, &p)
-
-	g.unregisterPlayer(&p, context.TODO(), client, &zerolog.Logger{})
+	g.unregisterPlayer(p, context.TODO(), client, &zerolog.Logger{})
 
 	dbHustler, err := client.GameHustler.Get(context.TODO(), p.HustlerId)
 	if err != nil {
@@ -431,19 +371,10 @@ func TestGetNearPlayersMoveData(t *testing.T) {
 func TestTick(t *testing.T) {
 	assert := assert.New(t)
 
-	g := NewGame()
+	g := newGameMock(2, false, 0)
+	p1 := g.Players[0]
+	p2 := g.Players[1]
 
-	p1 := player.Player{
-		Conn: &websocket.Conn{},
-		Send: make(chan messages.BaseMessage, 1),
-	}
-
-	p2 := player.Player{
-		Conn: &websocket.Conn{},
-		Send: make(chan messages.BaseMessage, 1),
-	}
-
-	g.Players = []*player.Player{&p1, &p2}
 	g.tick(context.TODO(), time.Time{})
 
 	p1Out := <-p1.Send
@@ -469,21 +400,6 @@ func TestHandlePlayerJoin(t *testing.T) {
 }
 */
 
-func WssFactory() *httptest.Server {
-	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		upgrader := websocket.Upgrader{}
-		conn, _ := upgrader.Upgrade(w, r, nil)
-
-		// Echo messages back to the client
-		for {
-			var msg messages.BaseMessage
-			conn.ReadJSON(&msg)
-
-			conn.WriteJSON(msg)
-		}
-	}))
-}
-
 func TestGenerateHandshakeData(t *testing.T) {
 	assert := assert.New(t)
 
@@ -492,8 +408,7 @@ func TestGenerateHandshakeData(t *testing.T) {
 		Id:        uuid.New(),
 	}
 
-	client := enttest.Open(t, "sqlite3", "file:ent?mode=memory&_fk=1")
-	defer client.Close()
+	client := newDbClientMock(t)
 
 	_, err := client.GameHustler.
 		Create().
