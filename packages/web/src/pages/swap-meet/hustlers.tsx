@@ -63,7 +63,7 @@ const SwapMeetHustlers = () => {
           </Button>
         </Link> */}
         <a
-          href="https://quixotic.io/collection/hustlers?attributes=attribute%3DClass%3AOriginal+Gangsta&query="
+          href="https://qx.app/collection/hustlers?attributes=attribute%3DClass%3AOriginal+Gangsta&query="
           target="quix"
         >
           <Button variant="primary" fontSize="xs">

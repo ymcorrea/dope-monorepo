@@ -60,7 +60,7 @@ const SwapMeetGear = () => {
         background="white"
         borderBottom="2px solid black"
       >
-        <a href="https://quixotic.io/collection/gear" target="quix">
+        <a href="https://qx.app/collection/gear" target="quix">
           <Button variant="primary" fontSize="xs">
             Search Gear on Quixotic
           </Button>

@@ -16,6 +16,6 @@ Today, the largest NFT platform on Optimism launched support for Hustlers and Ge
 
 ### Hustle Hard
 
-* [Buy OG Hustlers](https://quixotic.io/collection/hustlers?attributes=attribute%3DClass%3AOriginal+Gangsta&query=)
-* [Buy Hustlers](https://quixotic.io/collection/hustlers)
-* [Buy DOPE Gear](https://quixotic.io/collection/gear)
+* [Buy OG Hustlers](https://qx.app/collection/hustlers?attributes=attribute%3DClass%3AOriginal+Gangsta&query=)
+* [Buy Hustlers](https://qx.app/collection/hustlers)
+* [Buy DOPE Gear](https://qx.app/collection/gear)

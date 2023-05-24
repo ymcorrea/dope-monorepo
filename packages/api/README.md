@@ -48,8 +48,14 @@ WEB_API_PORT=8080
 
 ## BACK END
 
-- Run `docker-compose up --build` in repo/packages/api
-- Go to <http://localhost:3000/game> to verify the game is up
+```sh
+cd packages/api
+docker-compuse up --build
+grift list # to see scripts that can be run
+grift db:bootstrap
+```
+
+Then, go to <http://localhost:3000/game> to verify the game is up
 
 ## TOOLS
 

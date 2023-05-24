@@ -50,7 +50,7 @@ const DesktopIconList = () => {
           label="Shop DOPE Gear"
           clickAction={ () =>
             openBrowserTab(
-              'https://quixotic.io/collection/gear',
+              'https://qx.app/collection/gear',
             )
           }
         />
