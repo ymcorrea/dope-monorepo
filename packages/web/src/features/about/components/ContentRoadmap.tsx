@@ -168,7 +168,7 @@ const ContentRoadmap = () => (
             </Link>{' '}
             and on 3rd party marketplaces like{' '}
             <Link
-              href="https://quixotic.io/collection/opt/0x0E55e1913C50e015e0F60386ff56A4Bfb00D7110"
+              href="https://qx.app/collection/opt/0x0E55e1913C50e015e0F60386ff56A4Bfb00D7110"
               passHref
             >
               <a target="quix">Quixotic</a>
@@ -177,7 +177,7 @@ const ContentRoadmap = () => (
           </p>
           <p>
             <Link
-              href="https://quixotic.io/collection/opt/0x0E55e1913C50e015e0F60386ff56A4Bfb00D7110"
+              href="https://qx.app/collection/opt/0x0E55e1913C50e015e0F60386ff56A4Bfb00D7110"
               passHref
             >
               <a target="roadmap">GET GEAR</a>
@@ -209,7 +209,7 @@ const ContentRoadmap = () => (
             Hustlers will soon be tradeable on our <Link href="/swap-meet-hustlers"><a>Swap Meet</a></Link>, but
             are available now to be traded on{' '}
             <Link
-              href="https://quixotic.io/collection/opt/0xDbfEaAe58B6dA8901a8a40ba0712bEB2EE18368E?attributes=&tab=0&query="
+              href="https://qx.app/collection/opt/0xDbfEaAe58B6dA8901a8a40ba0712bEB2EE18368E?attributes=&tab=0&query="
               passHref
             >
               <a target="quix">Quixotic</a>

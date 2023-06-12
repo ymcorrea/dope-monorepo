@@ -8,6 +8,7 @@ require (
 	entgo.io/contrib v0.3.4
 	entgo.io/ent v0.11.6
 	github.com/99designs/gqlgen v0.17.24
+	github.com/aquilax/truncate v1.0.0
 	github.com/ethereum/go-ethereum v1.10.26
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0

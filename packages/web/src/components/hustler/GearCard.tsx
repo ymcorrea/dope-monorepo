@@ -10,7 +10,7 @@ import CartIcon from 'ui/svg/Cart';
 
 // This should be Partial<Item> but I couldn't get it working…
 const GearCard = ({ gear }: { gear: any }) => {
-  const quixPrefix = 'https://quixotic.io/collection/gear?query=';
+  const quixPrefix = 'https://qx.app/collection/gear?query=';
   const svg = gear.base?.svg ? gear.base.svg : gear.svg;
 
   if (!svg || !gear.id) return <LoadingBlock />;

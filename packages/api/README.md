@@ -35,7 +35,7 @@ DopeWars.gg is hosted on Google Cloud using a variety of services including Clou
 GOOGLE_APPLICATION_CREDENTIALS=PATH\TO\YOUR\gcloud\application_default_credentials.json
 GAME_SERVER_PORT=6060
 FIREBASE_API_KEY=firebase-web-api-key-for-making-requests-from-server
-WEB_API_PORT=7070
+WEB_API_PORT=8080
 ```
 
 ## FRONTEND
@@ -48,8 +48,14 @@ WEB_API_PORT=7070
 
 ## BACK END
 
-- Run `docker-compose up --build` in repo/packages/api
-- Go to <http://localhost:3000/game> to verify the game is up
+```sh
+cd packages/api
+docker-compuse up --build
+grift list # to see scripts that can be run
+grift db:bootstrap
+```
+
+Then, go to <http://localhost:3000/game> to verify the game is up
 
 ## TOOLS
 
@@ -122,4 +128,5 @@ gcloud app deploy --appyaml app.mainnet.api.yaml
 gcloud app deploy --appyaml app.mainnet.indexer.yaml
 gcloud app deploy --appyaml app.mainnet.game.yaml
 gcloud app deploy --appyaml app.mainnet.jobs.yaml
+gcloud app deploy cron.yaml
 ```

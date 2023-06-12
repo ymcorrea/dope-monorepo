@@ -37,11 +37,20 @@ const DesktopIconList = () => {
           }}
         />
         <DesktopIcon
+          icon="dope_frenzy"
+          label="DOPE FRENZY"
+          clickAction={ () =>
+            openBrowserTab(
+              'https://dopefrenzy.gg/',
+            )
+          }
+        />
+        <DesktopIcon
           icon="quixotic_circle"
           label="Shop DOPE Gear"
           clickAction={ () =>
             openBrowserTab(
-              'https://quixotic.io/collection/gear',
+              'https://qx.app/collection/gear',
             )
           }
         />

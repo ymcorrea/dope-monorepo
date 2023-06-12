@@ -9,7 +9,7 @@ import RenderFromChain from 'components/hustler/RenderFromChain';
 import CartIcon from 'ui/svg/Cart';
 
 const HustlerProfileCard = ({ hustler }: { hustler: Partial<Hustler> }) => {
-  const quixPrefix = 'https://quixotic.io/asset/opt/0xDbfEaAe58B6dA8901a8a40ba0712bEB2EE18368E';
+  const quixPrefix = 'https://qx.app/asset/0xDbfEaAe58B6dA8901a8a40ba0712bEB2EE18368E';
 
   if (!hustler.svg || !hustler.id) return <LoadingBlock />;
   return (

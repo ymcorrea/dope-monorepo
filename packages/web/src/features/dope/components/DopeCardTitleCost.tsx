@@ -7,7 +7,7 @@ import DopeCardTitleButton from './DopeCardTitleButton';
 
 type DopeCardTitleCostProps = Pick<DopeCardProps, 'dope'>;
 
-const LINK_PREFIX = 'https://opensea.io/assets/0x8707276df042e89669d69a177d3da7dc78bd8723/';
+const LINK_PREFIX = 'https://opensea.io/assets/ethereum/0x8707276df042e89669d69a177d3da7dc78bd8723/';
 
 const DopeCardTitleCost = ({ dope }: DopeCardTitleCostProps) => {
   const activeListings = dope.listings?.filter(l => l?.active);
