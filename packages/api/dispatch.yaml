@@ -6,5 +6,5 @@ dispatch:
   #   service: game
   - url: api.dopewars.gg/*
     service: default
-  - url: testnet.api.dopewars.gg/*
-    service: api-testnet
+  # - url: testnet.api.dopewars.gg/*
+  #   service: api-testnet
