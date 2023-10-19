@@ -1,7 +1,6 @@
 import styled from '@emotion/styled';
 import { PageWrapper } from 'ui/styles/components';
 import Head from 'components/Head';
-import Image from 'next/image';
 import AboutWindow from 'features/about/components/AboutWindow';
 import Cookies from 'js-cookie';
 import DesktopIconList from 'components/DesktopIconList';
@@ -18,8 +17,43 @@ const IndexPage = () => {
   return (
     <IndexWrapper>
       <Head />
-      <Image src="/images/under-construction.gif" alt="Under Construction" layout="fill" />
+      <DesktopIconList />
+      {Cookies.get('aboutWindowVisible') !== 'false' && (
+        <AboutWindow
+          posX={64}
+          posY={-16}
+          onClose={() => Cookies.set('aboutWindowVisible', 'false', { expires: 3 })}
+        />
+      )}
+      {/* {Cookies.get('newsWindowVisible') !== 'false' && (
+        <NewsWindow
+          allPosts={allPosts}
+          posX={0}
+          posY={32}
+          onClose={() => Cookies.set('newsWindowVisible', 'false', { expires: 3 })}
+        />
+      )} */}
     </IndexWrapper>
   );
 };
 export default IndexPage;
+
+// Server-side rendered with Next.js so that
+// we gather our news posts from the filesystem on server.
+// export const getStaticProps = async () => {
+//   const allPosts = getAllPosts([
+//     'title',
+//     'date',
+//     'slug',
+//     'author',
+//     'coverImage',
+//     'coverImageText',
+//     'excerpt',
+//     'location',
+//     'description',
+//   ]);
+
+//   return {
+//     props: { allPosts },
+//   };
+// };
