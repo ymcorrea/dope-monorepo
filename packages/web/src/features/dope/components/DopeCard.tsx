@@ -17,7 +17,7 @@ export type DopeCardProps = {
   isExpanded?: boolean;
   showCollapse?: boolean;
   hidePreviewButton?: boolean;
-  showStatus?: boolean;
+  showStatus?: boolean; 
   bestAskPriceEth?: number;
 };
 
