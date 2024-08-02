@@ -12,7 +12,7 @@ const iconPath = '/images/icon';
 
 export type DopeItemArray = Array<{
   __typename?: 'Item';
-  id: string;
+  id: string; 
   fullname: string;
   type: ItemType;
   name: string;
